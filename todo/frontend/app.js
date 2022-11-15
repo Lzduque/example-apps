@@ -1,5 +1,5 @@
 // Mock for view
-const signedIn = false
+const signedIn = true
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
@@ -103,10 +103,21 @@ const showListView = () => {
 	// Side Bar
 	const sideBar = addElement(main, 'div', 'sideBar')
 
-	const todoLists = addElement(sideBar, 'div', 'todoLists')
+	const listsContainer = addElement(sideBar, 'div', 'listsContainer')
 
 	//logic to render all lists names here
-	const list = addElement(todoLists, 'p', 'list', [], 'List Title')
+	const receivedMessageLists = {
+		type: 'get-all-lists',
+		lists: [
+			{id: 'list1', title: 'First List'},
+			{id: 'list2', title: 'Second List'},
+			{id: 'list3', title: 'Third List'},
+		],
+	}
+
+	receivedMessageLists.lists.forEach(({id, title}) =>
+		addElement(listsContainer, 'p', id, [], title)
+	)
 
 	const addListButton = addElement(
 		sideBar,
@@ -117,20 +128,47 @@ const showListView = () => {
 	)
 
 	// List View
+
 	const listView = addElement(main, 'div', 'listView')
 
-	const listTitle = addElement(listView, 'h1', 'listTitle', [], 'List Title') // Title list logic
-
+	const listTitleContainer = addElement(listView, 'div', 'listTitleContainer')
 	const listItems = addElement(listView, 'div', 'listItems')
 
-	// logic to render each item like this:
-	const listItem = addElement(listItems, 'div', 'listItem')
+	const sentMessageList1 = {
+		type: 'get-list-with-items',
+		listID: 'list1',
+	}
+	const receivedMessageList1 = {
+		type: 'list-with-items',
+		list: {
+			id: 'list1',
+			title: 'First List',
+		},
+		items: [
+			{id: 'item1', item: 'do the laundry'},
+			{id: 'item2', item: 'grocery shopping'},
+			{id: 'item3', item: 'clean littler box'},
+		],
+	}
 
-	const itemCheckbox = addElement(listItem, 'input', 'itemCheckbox', [
-		['type', 'checkbox'],
-	])
+	const listTitle = addElement(
+		listTitleContainer,
+		'h1',
+		`${receivedMessageList1.list.id}Title`,
+		[],
+		receivedMessageList1.list.title
+	)
 
-	const item = addElement(listItem, 'label', 'item', [], 'item') // item list logic
+	receivedMessageList1.items.forEach(({id, item}) => {
+		const itemContainer = addElement(listItems, 'div', id)
+		const itemCheckbox = addElement(
+			itemContainer,
+			'input',
+			`${id}Checkbox`,
+			[['type', 'checkbox']]
+		)
+		const text = addElement(itemContainer, 'label', `${id}Text`, [], item)
+	})
 
 	const addNewItemButton = addElement(
 		listView,
