@@ -1,4 +1,4 @@
-const signedIn = false
+const signedIn = true
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
@@ -95,7 +95,7 @@ const showListView = () => {
 
 	// Top Bar
 	const topBar = document.createElement('div')
-	topBar.setAttribute('id', 'topBar')
+	topBar.setAttribute('id', 'top-bar')
 	app.append(topBar)
 
 	const title = document.createElement('h2')
@@ -104,7 +104,7 @@ const showListView = () => {
 	topBar.append(title)
 
 	const signOut = document.createElement('button')
-	signOut.setAttribute('id', 'signOut')
+	signOut.setAttribute('id', 'sign-out')
 	signOut.innerText = 'Sign Out'
 	topBar.append(signOut)
 
@@ -115,13 +115,57 @@ const showListView = () => {
 
 	// Side Bar
 	const sideBar = document.createElement('div')
-	sideBar.setAttribute('id', 'sideBar')
+	sideBar.setAttribute('id', 'side-bar')
 	main.append(sideBar)
+
+	const todoLists = document.createElement('div')
+	todoLists.setAttribute('id', 'todo-lists')
+	sideBar.append(todoLists)
+
+	//logic to render all lists names here
+	const list = document.createElement('p')
+	list.setAttribute('id', 'list')
+	list.innerText = 'List Title' // Title list logic
+	todoLists.append(list)
+
+	const addListButton = document.createElement('button')
+	addListButton.setAttribute('id', 'add-list-button')
+	addListButton.innerText = 'Add List +'
+	sideBar.append(addListButton)
 
 	// List View
 	const listView = document.createElement('div')
-	listView.setAttribute('id', 'listView')
+	listView.setAttribute('id', 'list-view')
 	main.append(listView)
+
+	const listTitle = document.createElement('h1')
+	listTitle.setAttribute('id', 'list-title')
+	listTitle.innerText = 'List Title' // Title list logic
+	listView.append(listTitle)
+
+	const listItems = document.createElement('div')
+	listItems.setAttribute('id', 'list-items')
+	listView.append(listItems)
+
+	// logic to render each item like this:
+	const listItem = document.createElement('div')
+	listItem.setAttribute('id', 'list-item')
+	listItems.append(listItem)
+
+	const itemCheckbox = document.createElement('input')
+	itemCheckbox.setAttribute('id', 'list-item-checkbox-1') // todo id number in the end of id
+	itemCheckbox.setAttribute('type', 'checkbox')
+	listItem.append(itemCheckbox)
+
+	const item = document.createElement('label')
+	item.setAttribute('id', 'list-item-1') // todo id number in the end of id
+	item.innerText = 'item' // item list logic
+	listItem.append(item)
+
+	const addNewItemButton = document.createElement('button')
+	addNewItemButton.setAttribute('id', 'add-new-item-button')
+	addNewItemButton.innerText = '+ New Item'
+	listView.append(addNewItemButton)
 }
 
 window.onload = (event) => {
