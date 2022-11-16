@@ -115,9 +115,17 @@ const showListView = () => {
 		],
 	}
 
-	receivedMessageLists.lists.forEach(({id, title}) =>
-		addElement(listsContainer, 'p', id, [], title)
-	)
+	receivedMessageLists.lists.forEach(({id, title}) => {
+		const listContainer = addElement(listsContainer, 'div', id)
+		const list = addElement(listContainer, 'p', `${id}ListTitle`, [], title)
+		const deleteButton = addElement(
+			listContainer,
+			'button',
+			`${id}DeleteButton`,
+			[],
+			'Delete'
+		)
+	})
 
 	const addListButton = addElement(
 		sideBar,
@@ -128,7 +136,6 @@ const showListView = () => {
 	)
 
 	// List View
-
 	const listView = addElement(main, 'div', 'listView')
 
 	const listTitleContainer = addElement(listView, 'div', 'listTitleContainer')
@@ -168,6 +175,13 @@ const showListView = () => {
 			[['type', 'checkbox']]
 		)
 		const text = addElement(itemContainer, 'label', `${id}Text`, [], item)
+		const deleteButton = addElement(
+			itemContainer,
+			'button',
+			`${id}DeleteButton`,
+			[],
+			'Delete'
+		)
 	})
 
 	const addNewItemButton = addElement(
