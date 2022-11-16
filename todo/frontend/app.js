@@ -97,11 +97,17 @@ const showListView = () => {
 
 	const signOut = addElement(topBar, 'button', 'signOut', [], 'Sign Out')
 
+	// Horizontal line
+	const horizontalLine = addElement(app, 'div', 'horizontalLine')
+
 	// Main
 	const main = addElement(app, 'div', 'main')
 
 	// Side Bar
 	const sideBar = addElement(main, 'div', 'sideBar')
+
+	// Vertical line
+	const verticalLine = addElement(main, 'div', 'verticalLine')
 
 	const listsContainer = addElement(sideBar, 'div', 'listsContainer')
 
@@ -112,6 +118,10 @@ const showListView = () => {
 			{id: 'list1', title: 'First List'},
 			{id: 'list2', title: 'Second List'},
 			{id: 'list3', title: 'Third List'},
+			{id: 'list4', title: 'Third List'},
+			{id: 'list5', title: 'Third List'},
+			{id: 'list6', title: 'Third List'},
+			{id: 'list7', title: 'Third List'},
 		],
 	}
 
