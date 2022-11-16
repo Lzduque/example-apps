@@ -1,15 +1,27 @@
 // Mock for view
-const signedIn = true
+const signedIn = false
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
 
+	const signInViewContainer = addElement(app, 'div', 'signInViewContainer')
+
 	// REGISTER
-	const register = addElement(app, 'h2', 'register', [], 'Register')
+	const registerContainer = addElement(
+		signInViewContainer,
+		'div',
+		'registerContainer'
+	)
 
-	const registerDiv = addElement(app, 'div', 'registerDiv')
+	const register = addElement(
+		registerContainer,
+		'h2',
+		'register',
+		[],
+		'Register'
+	)
 
-	const emailDiv1 = addElement(registerDiv, 'div', 'emailDiv1')
+	const emailDiv1 = addElement(registerContainer, 'div', 'emailDiv1')
 
 	const emailLabel1 = addElement(
 		emailDiv1,
@@ -23,7 +35,7 @@ const showSignInView = () => {
 		['type', 'email'],
 	])
 
-	const passwordDiv1 = addElement(registerDiv, 'div', 'passwordDiv1')
+	const passwordDiv1 = addElement(registerContainer, 'div', 'passwordDiv1')
 
 	const passwordLabel1 = addElement(
 		passwordDiv1,
@@ -38,7 +50,7 @@ const showSignInView = () => {
 	])
 
 	const submitButton1 = addElement(
-		registerDiv,
+		registerContainer,
 		'button',
 		'submitButton1',
 		[],
@@ -46,11 +58,15 @@ const showSignInView = () => {
 	)
 
 	// SIGN IN
-	const signin = addElement(app, 'h2', 'signin', [], 'Sign In')
+	const signInContainer = addElement(
+		signInViewContainer,
+		'div',
+		'signInContainer'
+	)
 
-	const signinDiv = addElement(app, 'div', 'signinDiv')
+	const signin = addElement(signInContainer, 'h2', 'signin', [], 'Sign In')
 
-	const emailDiv2 = addElement(signinDiv, 'div', 'emailDiv2')
+	const emailDiv2 = addElement(signInContainer, 'div', 'emailDiv2')
 
 	const emailLabel2 = addElement(
 		emailDiv2,
@@ -64,7 +80,7 @@ const showSignInView = () => {
 		['type', 'email'],
 	])
 
-	const passwordDiv2 = addElement(signinDiv, 'div', 'passwordDiv2')
+	const passwordDiv2 = addElement(signInContainer, 'div', 'passwordDiv2')
 
 	const passwordLabel2 = addElement(
 		passwordDiv2,
@@ -79,7 +95,7 @@ const showSignInView = () => {
 	])
 
 	const submitButton2 = addElement(
-		signinDiv,
+		signInContainer,
 		'button',
 		'submitButton2',
 		[],
