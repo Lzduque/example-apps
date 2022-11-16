@@ -3,6 +3,19 @@
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
+	font-family: Helvetica, Verdana, Geneva, Tahoma, sans-serif;
+}
+
+h1 {
+	color: lightgray;
+	font-weight: bold;
+	font-size: 2.5rem;
+}
+
+h2 {
+	color: darkgray;
+	font-weight: bold;
+	font-size: 1.5rem;
 }
 
 #topBar {
@@ -22,9 +35,26 @@
 
 #main {
 	display: flex;
-	flex-direction: row;
+	flex-direction: column;
 	flex: 1 1 0%; /* fill remaining space */
-	height: calc(100vh - 2rem - 1px);
+	/* height: calc(100vh - 2rem - 1px); */
+	justify-items: center;
+	align-items: center;
+	width: 100%;
+}
+
+#listTitleContainer {
+	display: flex;
+	flex-direction: row;
+	/* flex: 2 1 auto; */
+	padding: 1rem;
+}
+
+#newItemContainer {
+	display: flex;
+	flex-direction: row;
+	/* flex: 2 1 auto; */
+	padding: 1rem;
 }
 
 #listView {

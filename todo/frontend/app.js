@@ -93,7 +93,7 @@ const showListView = () => {
 	// Top Bar
 	const topBar = addElement(app, 'div', 'topBar')
 
-	const title = addElement(topBar, 'h2', 'title', [], 'Todo')
+	const title = addElement(topBar, 'h2', 'title', [], 'Todos')
 
 	const signOut = addElement(topBar, 'button', 'signOut', [], 'Sign Out')
 
@@ -103,16 +103,29 @@ const showListView = () => {
 	// Main
 	const main = addElement(app, 'div', 'main')
 
+	// Title
+	const listTitleContainer = addElement(main, 'div', 'listTitleContainer')
+
+	const newItemContainer = addElement(main, 'div', 'newItemContainer')
+
+	// New Item Box
+	const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
+		['type', 'text'],
+	])
+
+	const addNewItemButton = addElement(
+		newItemContainer,
+		'button',
+		'addNewItemButton',
+		[],
+		'+'
+	)
+
 	// List View
 	const listView = addElement(main, 'div', 'listView')
 
-	const listTitleContainer = addElement(listView, 'div', 'listTitleContainer')
 	const listItems = addElement(listView, 'div', 'listItems')
 
-	const sentMessageList1 = {
-		type: 'get-list-with-items',
-		listID: 'list1',
-	}
 	const receivedMessageList1 = {
 		type: 'list-with-items',
 		list: {
@@ -152,19 +165,19 @@ const showListView = () => {
 		)
 	})
 
-	const newItemContainer = addElement(listView, 'div', 'newItemContainer')
+	// const newItemContainer = addElement(listView, 'div', 'newItemContainer')
 
-	const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
-		['type', 'text'],
-	])
+	// const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
+	// 	['type', 'text'],
+	// ])
 
-	const addNewItemButton = addElement(
-		newItemContainer,
-		'button',
-		'addNewItemButton',
-		[],
-		'+'
-	)
+	// const addNewItemButton = addElement(
+	// 	newItemContainer,
+	// 	'button',
+	// 	'addNewItemButton',
+	// 	[],
+	// 	'+'
+	// )
 }
 
 window.onload = (event) => {
