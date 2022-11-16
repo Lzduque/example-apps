@@ -103,48 +103,6 @@ const showListView = () => {
 	// Main
 	const main = addElement(app, 'div', 'main')
 
-	// Side Bar
-	const sideBar = addElement(main, 'div', 'sideBar')
-
-	// Vertical line
-	const verticalLine = addElement(main, 'div', 'verticalLine')
-
-	const listsContainer = addElement(sideBar, 'div', 'listsContainer')
-
-	//logic to render all lists names here
-	const receivedMessageLists = {
-		type: 'get-all-lists',
-		lists: [
-			{id: 'list1', title: 'First List'},
-			{id: 'list2', title: 'Second List'},
-			{id: 'list3', title: 'Third List'},
-			{id: 'list4', title: 'Third List'},
-			{id: 'list5', title: 'Third List'},
-			{id: 'list6', title: 'Third List'},
-			{id: 'list7', title: 'Third List'},
-		],
-	}
-
-	receivedMessageLists.lists.forEach(({id, title}) => {
-		const listContainer = addElement(listsContainer, 'div', id)
-		const list = addElement(listContainer, 'p', `${id}ListTitle`, [], title)
-		const deleteButton = addElement(
-			listContainer,
-			'button',
-			`${id}DeleteButton`,
-			[],
-			'Delete'
-		)
-	})
-
-	const addListButton = addElement(
-		sideBar,
-		'button',
-		'addListButton',
-		[],
-		'Add List +'
-	)
-
 	// List View
 	const listView = addElement(main, 'div', 'listView')
 
@@ -194,12 +152,18 @@ const showListView = () => {
 		)
 	})
 
+	const newItemContainer = addElement(listView, 'div', 'newItemContainer')
+
+	const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
+		['type', 'text'],
+	])
+
 	const addNewItemButton = addElement(
-		listView,
+		newItemContainer,
 		'button',
 		'addNewItemButton',
 		[],
-		'+ New Item'
+		'+'
 	)
 }
 

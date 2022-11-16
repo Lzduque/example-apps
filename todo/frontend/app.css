@@ -27,21 +27,6 @@
 	height: calc(100vh - 2rem - 1px);
 }
 
-#sideBar {
-	display: flex;
-	flex-direction: column;
-	flex: 1 1 auto;
-}
-
-#listsContainer {
-	height: calc(100% - 2rem);
-}
-
-#verticalLine {
-	width: 1px;
-	background-color: black;
-}
-
 #listView {
 	display: flex;
 	flex-direction: column;
@@ -49,59 +34,7 @@
 	padding: 1rem;
 }
 
-#list1 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-#list2 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-#list3 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-#list4 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-#list5 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-#list6 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-#list7 {
-	margin: 1rem;
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-}
-
-#addListButton {
-	height: 2rem;
-	margin: 1rem;
-}
-
 #addNewItemButton {
-	height: 2rem;
-	margin: 1rem;
+	/* height: 2rem;
+	margin: 1rem; */
 }
