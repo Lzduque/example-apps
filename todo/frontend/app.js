@@ -57,6 +57,13 @@ const showSignInView = () => {
 		'Submit'
 	)
 
+	// Horizontal line
+	const horizontalLine = addElement(
+		signInViewContainer,
+		'div',
+		'horizontalLine'
+	)
+
 	// SIGN IN
 	const signInContainer = addElement(
 		signInViewContainer,

@@ -18,10 +18,6 @@ h2 {
 	font-size: 1.5rem;
 }
 
-input {
-	border: 0;
-}
-
 #topBar {
 	display: flex;
 	flex-direction: row;
@@ -83,9 +79,8 @@ input {
 	max-width: 30rem;
 }
 
-#addNewItemButton {
-	/* height: 2rem;
-	margin: 1rem; */
+#newItemBox {
+	border: 0;
 }
 
 #item1 {
@@ -142,5 +137,42 @@ input {
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+	gap: 2rem;
+}
+
+#registerContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	justify-content: center;
+	align-items: center;
+}
+
+#signInContainer {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	justify-content: center;
+	align-items: center;
+}
+
+#emailDiv1 {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+#passwordDiv1 {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+#emailDiv2 {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+#passwordDiv2 {
+	display: flex;
+	flex-direction: row;
 	gap: 1rem;
 }
