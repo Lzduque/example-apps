@@ -106,9 +106,9 @@ const showListView = () => {
 	// Title
 	const listTitleContainer = addElement(main, 'div', 'listTitleContainer')
 
+	// New Item Box
 	const newItemContainer = addElement(main, 'div', 'newItemContainer')
 
-	// New Item Box
 	const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
 		['type', 'text'],
 	])
@@ -124,38 +124,43 @@ const showListView = () => {
 	// List View
 	const listView = addElement(main, 'div', 'listView')
 
-	const listItems = addElement(listView, 'div', 'listItems')
-
 	const receivedMessageList1 = {
 		type: 'list-with-items',
-		list: {
-			id: 'list1',
-			title: 'First List',
-		},
 		items: [
 			{id: 'item1', item: 'do the laundry'},
 			{id: 'item2', item: 'grocery shopping'},
-			{id: 'item3', item: 'clean littler box'},
+			{id: 'item3', item: "clean Maya's littler box every day"},
 		],
 	}
 
 	const listTitle = addElement(
 		listTitleContainer,
 		'h1',
-		`${receivedMessageList1.list.id}Title`,
+		`listTitle`,
 		[],
-		receivedMessageList1.list.title
+		'My Tasks'
 	)
 
 	receivedMessageList1.items.forEach(({id, item}) => {
-		const itemContainer = addElement(listItems, 'div', id)
-		const itemCheckbox = addElement(
+		const itemContainer = addElement(listView, 'div', id)
+		const itemLeftContainer = addElement(
 			itemContainer,
+			'div',
+			`${id}LeftContainer`
+		)
+		const itemCheckbox = addElement(
+			itemLeftContainer,
 			'input',
 			`${id}Checkbox`,
 			[['type', 'checkbox']]
 		)
-		const text = addElement(itemContainer, 'label', `${id}Text`, [], item)
+		const text = addElement(
+			itemLeftContainer,
+			'label',
+			`${id}Text`,
+			[],
+			item
+		)
 		const deleteButton = addElement(
 			itemContainer,
 			'button',
@@ -164,20 +169,6 @@ const showListView = () => {
 			'Delete'
 		)
 	})
-
-	// const newItemContainer = addElement(listView, 'div', 'newItemContainer')
-
-	// const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
-	// 	['type', 'text'],
-	// ])
-
-	// const addNewItemButton = addElement(
-	// 	newItemContainer,
-	// 	'button',
-	// 	'addNewItemButton',
-	// 	[],
-	// 	'+'
-	// )
 }
 
 window.onload = (event) => {

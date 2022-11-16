@@ -18,6 +18,10 @@ h2 {
 	font-size: 1.5rem;
 }
 
+input {
+	border: 0;
+}
+
 #topBar {
 	display: flex;
 	flex-direction: row;
@@ -53,18 +57,80 @@ h2 {
 #newItemContainer {
 	display: flex;
 	flex-direction: row;
-	/* flex: 2 1 auto; */
-	padding: 1rem;
+	max-width: 30rem;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+}
+
+#newItemBox {
+	display: flex;
+	flex-direction: row;
+	padding: 0.5rem;
+	border: 1px solid lightgray;
+	border-radius: 2rem;
+	box-shadow: -1px 2px 0.5rem 0.1rem lightgray;
+	min-width: 15rem;
 }
 
 #listView {
 	display: flex;
 	flex-direction: column;
 	flex: 2 1 auto;
+	justify-content: start;
+	align-items: center;
 	padding: 1rem;
+	max-width: 30rem;
 }
 
 #addNewItemButton {
 	/* height: 2rem;
 	margin: 1rem; */
+}
+
+#item1 {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	border-bottom: 1px solid lightgray;
+	padding: 0.5rem 0 0.5rem 0;
+}
+#item2 {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	border-bottom: 1px solid lightgray;
+	padding: 0.5rem 0 0.5rem 0;
+}
+#item3 {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	border-bottom: 1px solid lightgray;
+	padding: 0.5rem 0 0.5rem 0;
+}
+
+#item1LeftContainer {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+#item2LeftContainer {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
+}
+#item3LeftContainer {
+	display: flex;
+	flex-direction: row;
+	gap: 1rem;
 }
