@@ -160,19 +160,31 @@ h2 {
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	align-self: start;
+	justify-content: space-between;
+	width: 100%;
 }
 #passwordDiv1 {
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	align-self: start;
+	justify-content: space-between;
+	width: 100%;
 }
 #emailDiv2 {
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	align-self: start;
+	justify-content: space-between;
+	width: 100%;
 }
 #passwordDiv2 {
 	display: flex;
 	flex-direction: row;
 	gap: 1rem;
+	align-self: start;
+	justify-content: space-between;
+	width: 100%;
 }
