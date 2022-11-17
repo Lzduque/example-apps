@@ -1,5 +1,5 @@
 // Mock for view
-const signedIn = false
+const signedIn = true
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
