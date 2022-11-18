@@ -8,10 +8,18 @@ import qualified Control.Monad as M
 import qualified Control.Concurrent as Conc
 import qualified Data.Char as Char
 import qualified Control.Exception as Except
+import qualified Data.Maybe as Maybe
+import qualified GHC.Generics as Generics
+import qualified Data.Aeson as Aeson
 
 type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
+
+data ConnectionMessage = ConnectionMessage {
+  type_ :: T.Text
+  , userId :: T.Text
+} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
 newServerState :: ServerState
 newServerState = []
@@ -52,18 +60,15 @@ handleMessage
   -> Conc.MVar ServerState 
   -> IO ()
 handleMessage msg conn state = do
+  let client = parseConnectionMessage msg
   if
-    | isConnectionMessage msg -> do -- Parsing should be done with one function each time (returning Maybe)
-      let client = parseClient msg
-      handleNewConnection client conn state
+    | Maybe.isJust client -> do
+      handleNewConnection (Maybe.fromJust client) conn state
     | otherwise -> do
       T.putStrLn $ "Message not recognized: " <> msg
   where
-    parseClient :: T.Text -> Client
-    parseClient _ = ("1234", conn) -- TODO with JSON parsing (aeson)
-
-isConnectionMessage :: T.Text -> Bool
-isConnectionMessage msg = True -- TODO with JSON parsing (aeson)
+    parseConnectionMessage :: T.Text -> Maybe Client
+    parseConnectionMessage msg = Just ("1234", conn) -- TODO with JSON parsing (aeson)
 
 handleNewConnection
   :: Client

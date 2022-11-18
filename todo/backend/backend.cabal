@@ -42,10 +42,11 @@ executable backend
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        base ^>=4.16.4.0,
+        base ^>= 4.16.4.0,
         backend,
-        websockets ==0.12.7.3,
-        text == 2.0.1
+        websockets == 0.12.7.3,
+        text == 2.0.1,
+        aeson == 2.1.1.0
 
     hs-source-dirs:   app
     default-language: Haskell2010
@@ -54,3 +55,6 @@ executable backend
                 ScopedTypeVariables
                 LambdaCase
                 MultiWayIf
+                DeriveGeneric
+                DeriveAnyClass
+

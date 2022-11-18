@@ -4,7 +4,7 @@
 // }
 
 //  type messageConnection = {
-//		type = 'connection', :: string
+//		type_ = 'connection', :: string
 // 		userId :: string
 // }
 const socket = new WebSocket('ws://127.0.0.1:9160')
@@ -14,7 +14,7 @@ socket.onopen = function (e) {
 	console.log('Sending to server')
 	socket.send(
 		JSON.stringify({
-			type: 'connection',
+			type_: 'connection',
 			userId: '1234',
 		})
 	)
