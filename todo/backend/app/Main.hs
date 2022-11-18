@@ -1,6 +1,8 @@
 module Main where
 
 -- import qualified MyLib as Lib
+import qualified Messages as Msg
+
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -11,15 +13,33 @@ import qualified Control.Exception as Except
 import qualified Data.Maybe as Maybe
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as Aeson
+import Data.String.Conversions (cs)
 
 type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
-data ConnectionMessage = ConnectionMessage {
+data Connection = Connection {
   type_ :: T.Text
   , userId :: T.Text
 } deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data InTodoListMessage = InTodoListMessage {
+  type_ :: T.Text
+} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+-- data TodoListItems = TodoListItems {
+
+-- }
+
+-- {
+-- 		type: 'list-with-items',
+-- 		items: [
+-- 			{id: 'item1', item: 'do the laundry'},
+-- 			{id: 'item2', item: 'grocery shopping'},
+-- 			{id: 'item3', item: "clean Maya's littler box every day"},
+-- 		],
+-- 	}
 
 newServerState :: ServerState
 newServerState = []
@@ -40,7 +60,7 @@ removeClient client = filter ((/= fst client) . fst)
 
 broadcast :: T.Text -> ServerState -> IO ()
 broadcast message clients = do
-  T.putStrLn message
+  T.putStrLn $ "broadcasting: " <> message
   M.forM_ clients $ do
     \(_, conn) -> WS.sendTextData conn message
 
@@ -60,22 +80,20 @@ handleMessage
   -> Conc.MVar ServerState 
   -> IO ()
 handleMessage msg conn state = do
-  let client = parseConnectionMessage msg
+  let connectionMessage :: Maybe Msg.Connection = Aeson.decode . cs $ msg -- check type string
   if
-    | Maybe.isJust client -> do
-      handleNewConnection (Maybe.fromJust client) conn state
+    | Maybe.isJust connectionMessage -> do
+      let userId' = userId (Maybe.fromJust connectionMessage)
+      let client = (userId', conn)
+      handleNewConnection client state
     | otherwise -> do
       T.putStrLn $ "Message not recognized: " <> msg
-  where
-    parseConnectionMessage :: T.Text -> Maybe Client
-    parseConnectionMessage msg = Just ("1234", conn) -- TODO with JSON parsing (aeson)
 
 handleNewConnection
   :: Client
-  -> WS.Connection
   -> Conc.MVar ServerState 
   -> IO ()
-handleNewConnection client conn state = do
+handleNewConnection client state = do
   clients <- Conc.readMVar state
   if
     | clientExists client clients -> do
@@ -83,9 +101,9 @@ handleNewConnection client conn state = do
     | otherwise -> flip Except.finally (disconnect client state) $ do
       Conc.modifyMVar_ state $ \s -> do
         let s' = addClient client s
-        broadcast (fst client <> " joined") s'
+        -- broadcast (fst client <> " joined") s'
         return s'
-      talk client state
+      connect client state
 
 disconnect :: Client -> Conc.MVar ServerState -> IO ()
 disconnect client state = do
@@ -95,11 +113,20 @@ disconnect client state = do
     return (s', s')
   broadcast (fst client <> " disconnected") s
 
-talk :: Client -> Conc.MVar ServerState -> IO ()
-talk (user, conn) state = M.forever $ do
+connect :: Client -> Conc.MVar ServerState -> IO ()
+connect (user, conn) state = M.forever $ do
   msg <- WS.receiveData conn
-  Conc.readMVar state >>= broadcast
-    (user `mappend` ": " `mappend` msg)
+
+  let inTodoListMessage :: Maybe InTodoListMessage = Aeson.decode . cs $ msg
+
+  -- if
+  --   | Maybe.isJust inTodoListMessage -> do
+  --     sendTodoList client state
+    
+  T.putStrLn $ "New msg: " <> msg
+  T.putStrLn $ "From client: " <> user
+  -- Conc.readMVar state >>= broadcast
+  --   (user `mappend` ": " `mappend` msg)
 
 
 main :: IO ()

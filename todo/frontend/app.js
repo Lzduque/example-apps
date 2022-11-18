@@ -18,6 +18,10 @@ socket.onopen = function (e) {
 			userId: '1234',
 		})
 	)
+	// DEBUGGING
+	setTimeout(() => {
+		socket.send('late message')
+	}, 2000)
 }
 
 socket.onmessage = function (event) {
