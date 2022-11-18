@@ -9,7 +9,8 @@ import qualified Control.Concurrent as Conc
 import qualified Data.Char as Char
 import qualified Control.Exception as Except
 
-type Client = (T.Text, WS.Connection)
+type UserId = T.Text
+type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
 newServerState :: ServerState
@@ -19,7 +20,6 @@ numClients :: ServerState -> Int
 numClients = length
 
 clientExists :: Client -> ServerState -> Bool
--- clientExists client = any ((== fst client) . fst)
 clientExists (client, _) serverState = any (\(x,_) -> x == client) serverState
 
 addClient :: Client -> ServerState -> ServerState
@@ -41,34 +41,54 @@ application state pending = do
   putStrLn "application"
   conn <- WS.acceptRequest pending
   WS.withPingThread conn 30 (return ()) $ do
-    msg <- WS.receiveData conn
+    msg :: T.Text <- WS.receiveData conn
+    T.putStrLn $ "Message received: " <> msg
     clients <- Conc.readMVar state
-    let prefix = "Hi! I am "
-    let client = (T.drop (T.length prefix) msg, conn)
-    let disconnect = do
-          -- Remove client and return new state
-          s <- Conc.modifyMVar state $ \s -> do
-            let s' = removeClient client s
-            return (s', s')
-          broadcast (fst client <> " disconnected") s
-    -- the pattern here is to catch errors before and the last condition is, if everything's alright, allow connection
-    if
-      | not (prefix `T.isPrefixOf` msg) -> do
-        WS.sendTextData conn ("Wrong announcement" :: T.Text)
-      | any ($ fst client) [T.null, T.any Char.isPunctuation, T.any Char.isSpace] -> do
-        WS.sendTextData conn ("Name cannot contain punctuation or whitespace, and cannot be empty" :: T.Text)
-      | clientExists client clients -> do
-        WS.sendTextData conn ("User already exists" :: T.Text)
-      | otherwise -> flip Except.finally disconnect $ do
-        Conc.modifyMVar_ state $ \s -> do
-          let s' = addClient client s
-          WS.sendTextData conn $
-            "Welcome! Users: " <>
-            T.intercalate ", " (map fst s)
-          broadcast (fst client <> " joined") s'
-          return s'
-        talk client state
+    handleMessage msg conn state
     
+handleMessage
+  :: T.Text -- ^ Message
+  -> WS.Connection 
+  -> Conc.MVar ServerState 
+  -> IO ()
+handleMessage msg conn state = do
+  if
+    | isConnectionMessage msg -> do -- Parsing should be done with one function each time (returning Maybe)
+      let client = parseClient msg
+      handleNewConnection client conn state
+    | otherwise -> do
+      T.putStrLn $ "Message not recognized: " <> msg
+  where
+    parseClient :: T.Text -> Client
+    parseClient _ = ("1234", conn) -- TODO with JSON parsing (aeson)
+
+isConnectionMessage :: T.Text -> Bool
+isConnectionMessage msg = True -- TODO with JSON parsing (aeson)
+
+handleNewConnection
+  :: Client
+  -> WS.Connection
+  -> Conc.MVar ServerState 
+  -> IO ()
+handleNewConnection client conn state = do
+  clients <- Conc.readMVar state
+  if
+    | clientExists client clients -> do
+      T.putStrLn $ "User already exists: " <> fst client
+    | otherwise -> flip Except.finally (disconnect client state) $ do
+      Conc.modifyMVar_ state $ \s -> do
+        let s' = addClient client s
+        broadcast (fst client <> " joined") s'
+        return s'
+      talk client state
+
+disconnect :: Client -> Conc.MVar ServerState -> IO ()
+disconnect client state = do
+  -- Remove client and return new state
+  s <- Conc.modifyMVar state $ \s -> do
+    let s' = removeClient client s
+    return (s', s')
+  broadcast (fst client <> " disconnected") s
 
 talk :: Client -> Conc.MVar ServerState -> IO ()
 talk (user, conn) state = M.forever $ do
