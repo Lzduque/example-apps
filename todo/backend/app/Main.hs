@@ -19,15 +19,6 @@ type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
-data Connection = Connection {
-  type_ :: T.Text
-  , userId :: T.Text
-} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
-
-data InTodoListMessage = InTodoListMessage {
-  type_ :: T.Text
-} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
-
 -- data TodoListItems = TodoListItems {
 
 -- }
@@ -80,10 +71,10 @@ handleMessage
   -> Conc.MVar ServerState 
   -> IO ()
 handleMessage msg conn state = do
-  let connectionMessage :: Maybe Msg.Connection = Aeson.decode . cs $ msg -- check type string
+  let inConnectionMessage :: Maybe Msg.InConnection = Aeson.decode . cs $ msg
   if
-    | Maybe.isJust connectionMessage -> do
-      let userId' = userId (Maybe.fromJust connectionMessage)
+    | Maybe.isJust inConnectionMessage -> do
+      let userId' = Msg.userId (Maybe.fromJust inConnectionMessage)
       let client = (userId', conn)
       handleNewConnection client state
     | otherwise -> do
@@ -117,7 +108,7 @@ connect :: Client -> Conc.MVar ServerState -> IO ()
 connect (user, conn) state = M.forever $ do
   msg <- WS.receiveData conn
 
-  let inTodoListMessage :: Maybe InTodoListMessage = Aeson.decode . cs $ msg
+  let inTodoListMessage :: Maybe Msg.InTodoList = Aeson.decode . cs $ msg
 
   -- if
   --   | Maybe.isJust inTodoListMessage -> do
