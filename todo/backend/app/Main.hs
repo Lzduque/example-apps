@@ -127,6 +127,6 @@ main = do
   let port :: Int = 9160
   putStrLn $
     "Listening on " <> address <> ":" <> show port
-  let m = Msg.InConnection {userId = "1234"}
-  putStrLn $ cs $ Aeson.encode m
+  -- let m = Msg.InConnection {userId = "1234"}
+  -- putStrLn $ cs $ Aeson.encode m
   WS.runServer address port $ application state
