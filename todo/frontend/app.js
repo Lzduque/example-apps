@@ -14,7 +14,7 @@ socket.onopen = function (e) {
 	console.log('Sending to server')
 	socket.send(
 		JSON.stringify({
-			type_: 'connection',
+			type_: 'InConnectionType',
 			userId: '1234',
 		})
 	)

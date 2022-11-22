@@ -44,6 +44,8 @@ library
                 DeriveGeneric
                 DeriveAnyClass
                 DuplicateRecordFields
+                DataKinds
+                FlexibleInstances
                 
 executable backend
     main-is:          Main.hs
