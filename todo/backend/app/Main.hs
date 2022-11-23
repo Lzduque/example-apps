@@ -23,18 +23,18 @@ type ServerState = [Client]
 items :: [Types.TodoListItem]
 items = [
   Types.TodoListItem
-  { name = "do the laundry"
-  , checked = False
-  },
+    { name = "do the laundry"
+    , checked = False
+    },
   Types.TodoListItem
-  { name = "grocery shopping"
-  , checked = False
-  },
+    { name = "grocery shopping"
+    , checked = False
+    },
     Types.TodoListItem
-  { name = "clean Maya's littler box every day"
-  , checked = False
-  }
-]
+    { name = "clean Maya's littler box every day"
+    , checked = False
+    }
+  ]
 
 newServerState :: ServerState
 newServerState = []
@@ -133,7 +133,7 @@ handleUserMessage msg (user, conn) state = do
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
 sendTodoList (user, conn) state = do
-  let msg = Msg.ResTodoList { items = [] }
+  let msg = Msg.ResTodoList { items = items }
   sendMessage conn msg
 
 -- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string
