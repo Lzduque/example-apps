@@ -9,12 +9,12 @@
 // }
 const socket = new WebSocket('ws://127.0.0.1:9160')
 
-socket.onopen = function (e) {
+socket.onopen = (event) => {
 	console.log('[open] Connection established')
 	console.log('Sending to server')
 	socket.send(
 		JSON.stringify({
-			type_: 'in-connection',
+			type_: 'InConnection',
 			userId: '1234',
 		})
 	)
@@ -24,11 +24,11 @@ socket.onopen = function (e) {
 	}, 2000)
 }
 
-socket.onmessage = function (event) {
+socket.onmessage = (event) => {
 	console.log(`[message] Data received from server: ${event.data}`)
 }
 
-socket.onclose = function (event) {
+socket.onclose = (event) => {
 	if (event.wasClean) {
 		console.log(
 			`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
@@ -40,8 +40,8 @@ socket.onclose = function (event) {
 	}
 }
 
-socket.onerror = function (error) {
-	console.log(`[error]`)
+socket.onerror = (error) => {
+	console.log(`[error]: ${error}`)
 }
 
 // Mock for view
