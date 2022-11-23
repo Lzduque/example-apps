@@ -14,7 +14,7 @@ socket.onopen = (event) => {
 	console.log('Sending to server')
 	socket.send(
 		JSON.stringify({
-			type_: 'InConnection',
+			type_: 'ReqConnection',
 			userId: '1234',
 		})
 	)
@@ -25,14 +25,14 @@ socket.onopen = (event) => {
 }
 
 socket.onmessage = (event) => {
-	if (JSON.parse(event.data).type_ === 'OutConnection') {
+	if (JSON.parse(event.data).type_ === 'ResConnection') {
 		console.log(`[message] Connection with server established!`)
 		socket.send(
 			JSON.stringify({
-				type_: 'InTodoList',
+				type_: 'ReqTodoList',
 			})
 		)
-	} else if (JSON.parse(event.data).type_ === 'OutTodoList') {
+	} else if (JSON.parse(event.data).type_ === 'ResTodoList') {
 		console.log(`[message] message: ${JSON.parse(event.data).items}`)
 	} else {
 		console.log(`[message] Data received from server: ${event.data}`)
