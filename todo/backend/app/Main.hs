@@ -71,11 +71,11 @@ handleConnectionMessage
   -> Conc.MVar ServerState 
   -> IO ()
 handleConnectionMessage msg conn state = do
-  let inConnectionMessage :: Maybe Msg.InConnection = Aeson.decode . cs $ msg
+  let reqConnectionMessage :: Maybe Msg.ReqConnection = Aeson.decode . cs $ msg
   if
     -- Invitation to listen to messages from a specific client
-    | Maybe.isJust inConnectionMessage -> do
-      let userId' = Msg.userId (Maybe.fromJust inConnectionMessage)
+    | Maybe.isJust reqConnectionMessage -> do
+      let userId' = Msg.userId (Maybe.fromJust reqConnectionMessage)
       let client = (userId', conn)
       handleNewConnection client state
     | otherwise -> do
@@ -96,7 +96,7 @@ handleNewConnection client state = do
         -- broadcast (fst client <> " joined") s'
         return s'
       let conn = snd client
-      sendMessage conn Msg.OutConnection {}
+      sendMessage conn Msg.ResConnection {}
       connect client state
 
 disconnect :: Client -> Conc.MVar ServerState -> IO ()
@@ -119,17 +119,17 @@ handleUserMessage msg (user, conn) state = do
   T.putStrLn $ "New msg: " <> msg
   T.putStrLn $ "From client: " <> user
 
-  let inTodoListMessage :: Maybe Msg.InTodoList = Aeson.decode . cs $ msg
+  let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
 
   if
-    | Maybe.isJust inTodoListMessage -> do
+    | Maybe.isJust reqTodoListMessage -> do
       sendTodoList (user, conn) state
     | otherwise -> do
       T.putStrLn $ "Message not recognized: " <> msg
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
 sendTodoList (user, conn) state = do
-  let msg = Msg.OutTodoList { items = [] }
+  let msg = Msg.ResTodoList { items = [] }
   sendMessage conn msg
 
 -- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string
@@ -144,6 +144,6 @@ main = do
   let port :: Int = 9160
   putStrLn $
     "Listening on " <> address <> ":" <> show port
-  -- let m = Msg.InConnection {userId = "1234"}
+  -- let m = Msg.ReqConnection {userId = "1234"}
   -- putStrLn $ cs $ Aeson.encode m
   WS.runServer address port $ application state
