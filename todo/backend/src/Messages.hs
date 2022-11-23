@@ -8,6 +8,7 @@ import qualified GHC.TypeLits as TypeLits
 import qualified Data.Proxy as Proxy
 import Data.String.Conversions (cs)
 import qualified Control.Monad as M
+import qualified Types as Types
 
 instance {-# OVERLAPPING #-} TypeLits.KnownSymbol s =>Aeson.ToJSON (Proxy.Proxy s) where
   toJSON p = Aeson.String (cs $ TypeLits.symbolVal p)
@@ -21,8 +22,21 @@ instance {-# OVERLAPPING #-} TypeLits.KnownSymbol s => Aeson.FromJSON (Proxy.Pro
 data InConnection = InConnection
   { type_ :: Proxy.Proxy "InConnection"
   , userId :: T.Text
-} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data OutConnection = OutConnection
+  { type_ :: Proxy.Proxy "OutConnection"
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
 data InTodoList = InTodoList
   { type_ :: Proxy.Proxy "InTodoList"
-} deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data OutTodoList = OutTodoList
+  { type_ :: Proxy.Proxy "OutTodoList"
+  , items :: [Types.TodoListItem]
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

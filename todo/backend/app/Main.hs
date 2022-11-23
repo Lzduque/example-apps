@@ -63,16 +63,17 @@ application state pending = do
     msg :: T.Text <- WS.receiveData conn
     T.putStrLn $ "Message received: " <> msg
     clients <- Conc.readMVar state
-    handleMessage msg conn state
+    handleConnectionMessage msg conn state
     
-handleMessage
+handleConnectionMessage
   :: T.Text -- ^ Message
   -> WS.Connection 
   -> Conc.MVar ServerState 
   -> IO ()
-handleMessage msg conn state = do
+handleConnectionMessage msg conn state = do
   let inConnectionMessage :: Maybe Msg.InConnection = Aeson.decode . cs $ msg
   if
+    -- Invitation to listen to messages from a specific client
     | Maybe.isJust inConnectionMessage -> do
       let userId' = Msg.userId (Maybe.fromJust inConnectionMessage)
       let client = (userId', conn)
@@ -94,6 +95,8 @@ handleNewConnection client state = do
         let s' = addClient client s
         -- broadcast (fst client <> " joined") s'
         return s'
+      let conn = snd client
+      sendMessage conn Msg.OutConnection {}
       connect client state
 
 disconnect :: Client -> Conc.MVar ServerState -> IO ()
@@ -104,21 +107,35 @@ disconnect client state = do
     return (s', s')
   broadcast (fst client <> " disconnected") s
 
+-- This is to continuously listen for messages from a specific client
 connect :: Client -> Conc.MVar ServerState -> IO ()
 connect (user, conn) state = M.forever $ do
   msg <- WS.receiveData conn
+  handleUserMessage msg (user, conn) state
+
+handleUserMessage :: T.Text -> Client -> Conc.MVar ServerState -> IO ()
+handleUserMessage msg (user, conn) state = do
+  -- DEBUGGING
+  T.putStrLn $ "New msg: " <> msg
+  T.putStrLn $ "From client: " <> user
 
   let inTodoListMessage :: Maybe Msg.InTodoList = Aeson.decode . cs $ msg
 
-  -- if
-  --   | Maybe.isJust inTodoListMessage -> do
-  --     sendTodoList client state
-    
-  T.putStrLn $ "New msg: " <> msg
-  T.putStrLn $ "From client: " <> user
-  -- Conc.readMVar state >>= broadcast
-  --   (user `mappend` ": " `mappend` msg)
+  if
+    | Maybe.isJust inTodoListMessage -> do
+      sendTodoList (user, conn) state
+    | otherwise -> do
+      T.putStrLn $ "Message not recognized: " <> msg
 
+sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
+sendTodoList (user, conn) state = do
+  let msg = Msg.OutTodoList { items = [] }
+  sendMessage conn msg
+
+-- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string
+sendMessage :: Aeson.ToJSON a => WS.Connection -> a -> IO ()
+sendMessage conn msg = do
+  WS.sendTextData conn (cs . Aeson.encode $ msg :: T.Text)
 
 main :: IO ()
 main = do

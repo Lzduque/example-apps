@@ -25,7 +25,18 @@ socket.onopen = (event) => {
 }
 
 socket.onmessage = (event) => {
-	console.log(`[message] Data received from server: ${event.data}`)
+	if (JSON.parse(event.data).type_ === 'OutConnection') {
+		console.log(`[message] Connection with server established!`)
+		socket.send(
+			JSON.stringify({
+				type_: 'InTodoList',
+			})
+		)
+	} else if (JSON.parse(event.data).type_ === 'OutTodoList') {
+		console.log(`[message] message: ${JSON.parse(event.data).items}`)
+	} else {
+		console.log(`[message] Data received from server: ${event.data}`)
+	}
 }
 
 socket.onclose = (event) => {
