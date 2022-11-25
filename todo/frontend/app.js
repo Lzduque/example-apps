@@ -18,15 +18,12 @@ socket.onopen = (event) => {
 			userId: '1234',
 		})
 	)
-	// DEBUGGING
-	setTimeout(() => {
-		socket.send('late message')
-	}, 2000)
 }
 
 socket.onmessage = (event) => {
 	const message = JSON.parse(event.data)
-	console.log(`[message] Data received from server: ${message}`)
+	console.log(`[message] Data received from server: `)
+	console.log(message)
 	switch (message.type_) {
 		case 'ResConnection':
 			console.log(`[message] Connection with server established!`)
@@ -38,6 +35,8 @@ socket.onmessage = (event) => {
 			break
 		case 'ResTodoList':
 			message.items.forEach(({id, name, checked}) => {
+				console.log(`[message] ResTodoList`)
+
 				const itemContainer = addElement(listView, 'div', id)
 				const itemLeftContainer = addElement(
 					itemContainer,

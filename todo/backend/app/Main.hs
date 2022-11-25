@@ -2,6 +2,7 @@ module Main where
 
 -- import qualified MyLib as Lib
 import qualified Messages as Msg
+import qualified Database as Db
 import qualified Api.Types.TodoListItem as TodoListItem
 
 import qualified Network.WebSockets as WS
@@ -20,24 +21,24 @@ type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
-items :: [TodoListItem.TodoListItem]
-items =
-  [ TodoListItem.TodoListItem
-    { id = 1
-    , name = "do the laundry"
-    , checked = False
-    }
-  , TodoListItem.TodoListItem
-    { id = 2
-    , name = "grocery shopping"
-    , checked = True
-    }
-  , TodoListItem.TodoListItem
-    { id = 3
-    , name = "clean Maya's littler box every day"
-    , checked = False
-    }
-  ]
+-- items :: [TodoListItem.TodoListItem]
+-- items =
+--   [ TodoListItem.TodoListItem
+--     { id = 1
+--     , name = "do the laundry"
+--     , checked = False
+--     }
+--   , TodoListItem.TodoListItem
+--     { id = 2
+--     , name = "grocery shopping"
+--     , checked = True
+--     }
+--   , TodoListItem.TodoListItem
+--     { id = 3
+--     , name = "clean Maya's littler box every day"
+--     , checked = False
+--     }
+--   ]
 
 newServerState :: ServerState
 newServerState = []
@@ -136,6 +137,7 @@ handleUserMessage msg (user, conn) state = do
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
 sendTodoList (user, conn) state = do
+  items <- Db.getTodoList
   let msg = Msg.ResTodoList { items = items }
   sendMessage conn msg
 

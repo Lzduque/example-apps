@@ -25,6 +25,7 @@ library
     exposed-modules:  
         Messages,
         Api.Types.TodoListItem,
+        Database.Types.TodoListItem,
         Database
 
     -- Modules included in this library but not exported.
@@ -38,7 +39,8 @@ library
         aeson == 2.1.1.0,
         string-conversions == 0.4.0.1,
         sqlite-simple == 0.4.18.2,
-        direct-sqlite == 2.3.27
+        direct-sqlite == 2.3.27,
+        time == 1.11.1.1
 
     hs-source-dirs:   src
     default-language: Haskell2010
