@@ -7,3 +7,5 @@ const addElement = (parent, elementType, name, attrs = [], text = null) => {
 	parent.append(el)
 	return el
 }
+
+const isTruthy = (x) => !!x

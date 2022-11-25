@@ -30,7 +30,7 @@ items =
   , TodoListItem.TodoListItem
     { id = 2
     , name = "grocery shopping"
-    , checked = False
+    , checked = True
     }
   , TodoListItem.TodoListItem
     { id = 3

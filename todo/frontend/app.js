@@ -37,25 +37,27 @@ socket.onmessage = (event) => {
 			)
 			break
 		case 'ResTodoList':
-			message.items.forEach(({id, item}) => {
+			message.items.forEach(({id, name, checked}) => {
 				const itemContainer = addElement(listView, 'div', id)
 				const itemLeftContainer = addElement(
 					itemContainer,
 					'div',
 					`${id}LeftContainer`
 				)
+				const checkedAttr = checked ? ['checked', ''] : null
+				const itemCheckboxAttrs = [['type', 'checkbox'], checkedAttr]
 				const itemCheckbox = addElement(
 					itemLeftContainer,
 					'input',
 					`${id}Checkbox`,
-					[['type', 'checkbox']]
+					itemCheckboxAttrs.filter(isTruthy)
 				)
 				const text = addElement(
 					itemLeftContainer,
 					'label',
 					`${id}Text`,
 					[],
-					item
+					name
 				)
 				const deleteButton = addElement(
 					itemContainer,
