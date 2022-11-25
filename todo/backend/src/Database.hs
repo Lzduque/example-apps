@@ -42,11 +42,11 @@ getTodoList :: IO [TodoListItem.TodoListItem]
 getTodoList = do
   conn <- connect
   items :: [DbTodoListItem.TodoListItem] <- SQL.query_ conn "SELECT * FROM TodoListItem"
-  let apiItems :: [TodoListItem.TodoListItem] = flip map items $
-    \item -> TodoListItem.TodoListItem
-      { TodoListItem.id = DbTodoListItem.id item
-      , TodoListItem.name = DbTodoListItem.name item
-      , TodoListItem.checked = DbTodoListItem.checked item == 1
-      }
+  let apiItems :: [TodoListItem.TodoListItem] = flip map items $ \item ->
+        TodoListItem.TodoListItem
+        { TodoListItem.id = DbTodoListItem.id item
+        , TodoListItem.name = DbTodoListItem.name item
+        , TodoListItem.checked = DbTodoListItem.checked item == 1
+        }
   SQL.close conn
   return apiItems
