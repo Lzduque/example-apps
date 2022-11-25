@@ -22,17 +22,20 @@ maintainer:         43674302+Lzduque@users.noreply.github.com
 extra-source-files: CHANGELOG.md
 
 library
-    exposed-modules:  Messages, Types
+    exposed-modules:  
+        Messages,
+        Api.Types.TodoListItem
 
     -- Modules included in this library but not exported.
     -- other-modules:
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:  base ^>=4.16.4.0,
-                            text == 2.0.1,
-                            aeson == 2.1.1.0,
-                            string-conversions == 0.4.0.1
+    build-depends:  
+        base ^>=4.16.4.0,
+        text == 2.0.1,
+        aeson == 2.1.1.0,
+        string-conversions == 0.4.0.1
 
     hs-source-dirs:   src
     default-language: Haskell2010

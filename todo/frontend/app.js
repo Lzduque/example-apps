@@ -25,17 +25,50 @@ socket.onopen = (event) => {
 }
 
 socket.onmessage = (event) => {
-	if (JSON.parse(event.data).type_ === 'ResConnection') {
-		console.log(`[message] Connection with server established!`)
-		socket.send(
-			JSON.stringify({
-				type_: 'ReqTodoList',
+	const message = JSON.parse(event.data)
+	console.log(`[message] Data received from server: ${message}`)
+	switch (message.type_) {
+		case 'ResConnection':
+			console.log(`[message] Connection with server established!`)
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+				})
+			)
+			break
+		case 'ResTodoList':
+			message.items.forEach(({id, item}) => {
+				const itemContainer = addElement(listView, 'div', id)
+				const itemLeftContainer = addElement(
+					itemContainer,
+					'div',
+					`${id}LeftContainer`
+				)
+				const itemCheckbox = addElement(
+					itemLeftContainer,
+					'input',
+					`${id}Checkbox`,
+					[['type', 'checkbox']]
+				)
+				const text = addElement(
+					itemLeftContainer,
+					'label',
+					`${id}Text`,
+					[],
+					item
+				)
+				const deleteButton = addElement(
+					itemContainer,
+					'button',
+					`${id}DeleteButton`,
+					[],
+					'Delete'
+				)
 			})
-		)
-	} else if (JSON.parse(event.data).type_ === 'ResTodoList') {
-		console.log(`[message] message: ${JSON.parse(event.data).items}`)
-	} else {
-		console.log(`[message] Data received from server: ${event.data}`)
+			break
+		default:
+			console.log('Message not recognized')
+			break
 	}
 }
 
@@ -204,15 +237,6 @@ const showListView = () => {
 	// List View
 	const listView = addElement(main, 'div', 'listView')
 
-	const receivedMessageList1 = {
-		type: 'list-with-items',
-		items: [
-			{id: 'item1', item: 'do the laundry'},
-			{id: 'item2', item: 'grocery shopping'},
-			{id: 'item3', item: "clean Maya's littler box every day"},
-		],
-	}
-
 	const listTitle = addElement(
 		listTitleContainer,
 		'h1',
@@ -220,35 +244,6 @@ const showListView = () => {
 		[],
 		'My Tasks'
 	)
-
-	receivedMessageList1.items.forEach(({id, item}) => {
-		const itemContainer = addElement(listView, 'div', id)
-		const itemLeftContainer = addElement(
-			itemContainer,
-			'div',
-			`${id}LeftContainer`
-		)
-		const itemCheckbox = addElement(
-			itemLeftContainer,
-			'input',
-			`${id}Checkbox`,
-			[['type', 'checkbox']]
-		)
-		const text = addElement(
-			itemLeftContainer,
-			'label',
-			`${id}Text`,
-			[],
-			item
-		)
-		const deleteButton = addElement(
-			itemContainer,
-			'button',
-			`${id}DeleteButton`,
-			[],
-			'Delete'
-		)
-	})
 }
 
 window.onload = (event) => {

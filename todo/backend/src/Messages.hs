@@ -8,7 +8,7 @@ import qualified GHC.TypeLits as TypeLits
 import qualified Data.Proxy as Proxy
 import Data.String.Conversions (cs)
 import qualified Control.Monad as M
-import qualified Types as Types
+import qualified Api.Types.TodoListItem as TodoListItem
 
 instance {-# OVERLAPPING #-} TypeLits.KnownSymbol s =>Aeson.ToJSON (Proxy.Proxy s) where
   toJSON p = Aeson.String (cs $ TypeLits.symbolVal p)
@@ -37,6 +37,6 @@ data ReqTodoList = ReqTodoList
 
 data ResTodoList = ResTodoList
   { type_ :: Proxy.Proxy "ResTodoList"
-  , items :: [Types.TodoListItem]
+  , items :: [TodoListItem.TodoListItem]
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

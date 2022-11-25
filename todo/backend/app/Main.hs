@@ -2,7 +2,7 @@ module Main where
 
 -- import qualified MyLib as Lib
 import qualified Messages as Msg
-import qualified Types as Types
+import qualified Api.Types.TodoListItem as TodoListItem
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -20,18 +20,21 @@ type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
-items :: [Types.TodoListItem]
-items = [
-  Types.TodoListItem
-    { name = "do the laundry"
+items :: [TodoListItem.TodoListItem]
+items =
+  [ TodoListItem.TodoListItem
+    { id = 1
+    , name = "do the laundry"
     , checked = False
-    },
-  Types.TodoListItem
-    { name = "grocery shopping"
+    }
+  , TodoListItem.TodoListItem
+    { id = 2
+    , name = "grocery shopping"
     , checked = False
-    },
-    Types.TodoListItem
-    { name = "clean Maya's littler box every day"
+    }
+  , TodoListItem.TodoListItem
+    { id = 3
+    , name = "clean Maya's littler box every day"
     , checked = False
     }
   ]
