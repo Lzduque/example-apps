@@ -88,6 +88,13 @@ socket.onmessage = (event) => {
 				})
 			)
 			break
+		case 'ResDeleteTodo':
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+				})
+			)
+			break
 		default:
 			console.log('Message not recognized')
 			break

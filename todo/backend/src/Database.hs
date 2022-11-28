@@ -58,7 +58,7 @@ createTodo :: CTodoListItem.CTodoListItem -> IO ()
 createTodo todoItem = do
   conn <- connect
   let todo = CTodoListItem.name todoItem
-  SQL.execute conn "INSERT INTO RTodoListItem (name) VALUES (?)" [todo]
+  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [todo]
   SQL.close conn
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
@@ -68,5 +68,5 @@ createTodo todoItem = do
 deleteTodo :: Integer -> IO ()
 deleteTodo itemId = do
   conn <- connect
-  SQL.execute conn "DELETE FROM problems WHERE id = ?" [itemId]
+  SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId]
   SQL.close conn

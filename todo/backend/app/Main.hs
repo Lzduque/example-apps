@@ -143,6 +143,7 @@ handleUserMessage msg (user, conn) state = do
       sendMessage conn Msg.ResCreateTodo {}
     | Maybe.isJust reqDeleteTodo -> do
       Db.deleteTodo $ (Msg.id :: Msg.ReqDeleteTodo -> Integer) (Maybe.fromJust reqDeleteTodo)
+      sendMessage conn Msg.ResDeleteTodo {}
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
