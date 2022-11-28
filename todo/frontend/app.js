@@ -227,6 +227,28 @@ const showListView = () => {
 		['type', 'text'],
 	])
 
+	const createTodo = () => {
+		console.log('createTodo')
+		const newTodo = newItemBox.value
+		console.log('newTodo: ', newTodo)
+		// send to back end to save in db,
+		// catch and try
+		// reset field value
+
+		try {
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqCreateTodo',
+					name: newTodo,
+				})
+			)
+		} catch (e) {
+			console.log('ERROR while creating new todo: ', e)
+		}
+
+		return
+	}
+
 	const addNewItemButton = addElement(
 		newItemContainer,
 		'button',
@@ -234,6 +256,8 @@ const showListView = () => {
 		[],
 		'+'
 	)
+
+	addNewItemButton.addEventListener('click', createTodo)
 
 	// List View
 	const listView = addElement(main, 'div', 'listView')

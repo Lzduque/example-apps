@@ -25,6 +25,7 @@ library
     exposed-modules:  
         Messages,
         Api.Types.TodoListItem,
+        Api.Types.NewTodoListItem,
         Database.Types.TodoListItem,
         Database
 

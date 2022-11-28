@@ -6,6 +6,7 @@ import qualified Database.SQLite3 as SQLite
 import qualified Data.Text.IO as T
 
 import qualified Api.Types.TodoListItem as TodoListItem
+import qualified Api.Types.NewTodoListItem as NewTodoListItem
 import qualified Database.Types.TodoListItem as DbTodoListItem
 
 dbFile :: FilePath
@@ -50,3 +51,10 @@ getTodoList = do
         }
   SQL.close conn
   return apiItems
+
+createTodo :: NewTodoListItem.NewTodoListItem -> IO ()
+createTodo todoItem = do
+  conn <- connect
+  let todo = NewTodoListItem.name todoItem
+  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [todo]
+  SQL.close conn

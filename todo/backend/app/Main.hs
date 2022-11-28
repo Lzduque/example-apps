@@ -4,6 +4,7 @@ module Main where
 import qualified Messages as Msg
 import qualified Database as Db
 import qualified Api.Types.TodoListItem as TodoListItem
+import qualified Api.Types.NewTodoListItem as NewTodoListItem
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -87,7 +88,7 @@ handleConnectionMessage msg conn state = do
       let client = (userId', conn)
       handleNewConnection client state
     | otherwise -> do
-      T.putStrLn $ "Message not recognized: " <> msg
+      T.putStrLn $ "Message not recognized (connection): " <> msg
 
 handleNewConnection
   :: Client
@@ -128,12 +129,18 @@ handleUserMessage msg (user, conn) state = do
   T.putStrLn $ "From client: " <> user
 
   let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
+  let reqCreateTodoMessage :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
 
   if
     | Maybe.isJust reqTodoListMessage -> do
       sendTodoList (user, conn) state
+    | Maybe.isJust reqCreateTodoMessage -> do
+      let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodoMessage)
+      Db.createTodo $ NewTodoListItem.NewTodoListItem
+        { name = name
+        }
     | otherwise -> do
-      T.putStrLn $ "Message not recognized: " <> msg
+      T.putStrLn $ "Message not recognized (user): " <> msg
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
 sendTodoList (user, conn) state = do
