@@ -34,6 +34,7 @@ socket.onmessage = (event) => {
 			)
 			break
 		case 'ResTodoList':
+			listView.innerHTML = ''
 			message.items.forEach(({id, name, checked}) => {
 				console.log(`[message] ResTodoList`)
 
@@ -66,6 +67,13 @@ socket.onmessage = (event) => {
 					'Delete'
 				)
 			})
+			break
+		case 'ResCreateTodo':
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+				})
+			)
 			break
 		default:
 			console.log('Message not recognized')
@@ -228,25 +236,17 @@ const showListView = () => {
 	])
 
 	const createTodo = () => {
-		console.log('createTodo')
-		const newTodo = newItemBox.value
-		console.log('newTodo: ', newTodo)
-		// send to back end to save in db,
-		// catch and try
-		// reset field value
-
 		try {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqCreateTodo',
-					name: newTodo,
+					name: newItemBox.value,
 				})
 			)
+			newItemBox.value = ''
 		} catch (e) {
 			console.log('ERROR while creating new todo: ', e)
 		}
-
-		return
 	}
 
 	const addNewItemButton = addElement(

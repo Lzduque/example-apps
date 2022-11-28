@@ -47,8 +47,7 @@ data ReqCreateTodo = ReqCreateTodo
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
--- data ResCreateTodo = ResCreateTodo
---   { type_ :: Proxy.Proxy "ResCreateTodo"
---   , items :: [TodoListItem.TodoListItem]
---   }
---   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+data ResCreateTodo = ResCreateTodo
+  { type_ :: Proxy.Proxy "ResCreateTodo"
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

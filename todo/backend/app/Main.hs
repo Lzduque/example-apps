@@ -139,6 +139,7 @@ handleUserMessage msg (user, conn) state = do
       Db.createTodo $ NewTodoListItem.NewTodoListItem
         { name = name
         }
+      sendMessage conn Msg.ResCreateTodo {}
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
