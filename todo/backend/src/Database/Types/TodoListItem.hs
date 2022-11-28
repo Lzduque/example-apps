@@ -9,7 +9,7 @@ data TodoListItem = TodoListItem
   { id :: Integer
   , name :: T.Text
   , checked :: Integer
-  , created_at :: Time.UTCTime
-  , updated_at :: Time.UTCTime
+  , createdAt :: Time.UTCTime
+  , updatedAt :: Time.UTCTime
   }
   deriving (Generics.Generic, Show, SQL.FromRow, SQL.ToRow)

@@ -66,6 +66,19 @@ socket.onmessage = (event) => {
 					[],
 					'Delete'
 				)
+				const deleteTodo = (id) => (event) => {
+					try {
+						socket.send(
+							JSON.stringify({
+								type_: 'ReqDeleteTodo',
+								id: id,
+							})
+						)
+					} catch (e) {
+						console.log('ERROR ReqDeleteTodo: ', e)
+					}
+				}
+				deleteButton.addEventListener('click', deleteTodo(id))
 			})
 			break
 		case 'ResCreateTodo':
@@ -245,7 +258,7 @@ const showListView = () => {
 			)
 			newItemBox.value = ''
 		} catch (e) {
-			console.log('ERROR while creating new todo: ', e)
+			console.log('ERROR ReqCreateTodo: ', e)
 		}
 	}
 

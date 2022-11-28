@@ -3,8 +3,8 @@ module Main where
 -- import qualified MyLib as Lib
 import qualified Messages as Msg
 import qualified Database as Db
-import qualified Api.Types.TodoListItem as TodoListItem
-import qualified Api.Types.NewTodoListItem as NewTodoListItem
+import qualified Api.Types.RTodoListItem as RTodoListItem
+import qualified Api.Types.CTodoListItem as CTodoListItem
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -22,19 +22,19 @@ type UserId = T.Text
 type Client = (UserId, WS.Connection)
 type ServerState = [Client]
 
--- items :: [TodoListItem.TodoListItem]
+-- items :: [RTodoListItem.RTodoListItem]
 -- items =
---   [ TodoListItem.TodoListItem
+--   [ RTodoListItem.RTodoListItem
 --     { id = 1
 --     , name = "do the laundry"
 --     , checked = False
 --     }
---   , TodoListItem.TodoListItem
+--   , RTodoListItem.RTodoListItem
 --     { id = 2
 --     , name = "grocery shopping"
 --     , checked = True
 --     }
---   , TodoListItem.TodoListItem
+--   , RTodoListItem.RTodoListItem
 --     { id = 3
 --     , name = "clean Maya's littler box every day"
 --     , checked = False
@@ -130,16 +130,19 @@ handleUserMessage msg (user, conn) state = do
 
   let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
   let reqCreateTodoMessage :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
+  let reqDeleteTodo :: Maybe Msg.ReqDeleteTodo = Aeson.decode . cs $ msg
 
   if
     | Maybe.isJust reqTodoListMessage -> do
       sendTodoList (user, conn) state
     | Maybe.isJust reqCreateTodoMessage -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodoMessage)
-      Db.createTodo $ NewTodoListItem.NewTodoListItem
+      Db.createTodo CTodoListItem.CTodoListItem
         { name = name
         }
       sendMessage conn Msg.ResCreateTodo {}
+    | Maybe.isJust reqDeleteTodo -> do
+      Db.deleteTodo $ (Msg.id :: Msg.ReqDeleteTodo -> Integer) (Maybe.fromJust reqDeleteTodo)
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 

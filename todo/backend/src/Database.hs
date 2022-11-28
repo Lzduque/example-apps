@@ -5,8 +5,8 @@ import qualified Database.SQLite.Simple as SQL
 import qualified Database.SQLite3 as SQLite
 import qualified Data.Text.IO as T
 
-import qualified Api.Types.TodoListItem as TodoListItem
-import qualified Api.Types.NewTodoListItem as NewTodoListItem
+import qualified Api.Types.RTodoListItem as RTodoListItem
+import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Database.Types.TodoListItem as DbTodoListItem
 
 dbFile :: FilePath
@@ -39,22 +39,34 @@ populate = do
   putStrLn $ "DB populated"
   SQL.close conn
 
-getTodoList :: IO [TodoListItem.TodoListItem]
+getTodoList :: IO [RTodoListItem.RTodoListItem]
 getTodoList = do
   conn <- connect
   items :: [DbTodoListItem.TodoListItem] <- SQL.query_ conn "SELECT * FROM TodoListItem"
-  let apiItems :: [TodoListItem.TodoListItem] = flip map items $ \item ->
-        TodoListItem.TodoListItem
-        { TodoListItem.id = DbTodoListItem.id item
-        , TodoListItem.name = DbTodoListItem.name item
-        , TodoListItem.checked = DbTodoListItem.checked item == 1
+  let apiItems :: [RTodoListItem.RTodoListItem] = flip map items $ \item ->
+        RTodoListItem.RTodoListItem
+        { RTodoListItem.id = DbTodoListItem.id item
+        , RTodoListItem.name = DbTodoListItem.name item
+        , RTodoListItem.checked = DbTodoListItem.checked item == 1
+        , RTodoListItem.createdAt = DbTodoListItem.createdAt item
+        , RTodoListItem.updatedAt = DbTodoListItem.updatedAt item
         }
   SQL.close conn
   return apiItems
 
-createTodo :: NewTodoListItem.NewTodoListItem -> IO ()
+createTodo :: CTodoListItem.CTodoListItem -> IO ()
 createTodo todoItem = do
   conn <- connect
-  let todo = NewTodoListItem.name todoItem
-  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [todo]
+  let todo = CTodoListItem.name todoItem
+  SQL.execute conn "INSERT INTO RTodoListItem (name) VALUES (?)" [todo]
+  SQL.close conn
+
+-- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
+
+-- updateTodo :: UpdateTodoListItem.UpdateTodoListItem -> IO ()
+
+deleteTodo :: Integer -> IO ()
+deleteTodo itemId = do
+  conn <- connect
+  SQL.execute conn "DELETE FROM problems WHERE id = ?" [itemId]
   SQL.close conn
