@@ -1,0 +1,11 @@
+module Api.Types.UTodoListItem where
+
+import qualified Data.Text as T
+import qualified GHC.Generics as Generics
+import qualified Data.Aeson as Aeson
+import qualified Data.Time.Clock as Time
+
+data UTodoListItem = UTodoListItem
+  { checked :: Bool
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
