@@ -7,6 +7,7 @@ import qualified Data.Text.IO as T
 
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
+import qualified Api.Types.UTodoListItem as UTodoListItem
 import qualified Database.Types.TodoListItem as DbTodoListItem
 
 dbFile :: FilePath
@@ -63,7 +64,12 @@ createTodo todoItem = do
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
 
--- updateTodo :: UpdateTodoListItem.UpdateTodoListItem -> IO ()
+updateTodo :: Integer -> UTodoListItem.UTodoListItem -> IO ()
+updateTodo itemId todoItem = do
+  conn <- connect
+  let checked = UTodoListItem.checked todoItem
+  SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?" (checked, itemId)
+  SQL.close conn
 
 deleteTodo :: Integer -> IO ()
 deleteTodo itemId = do

@@ -52,6 +52,21 @@ socket.onmessage = (event) => {
 					`${id}Checkbox`,
 					itemCheckboxAttrs.filter(isTruthy)
 				)
+				const toggleTodo = (id) => (event) => {
+					console.log('event.target.checked: ', event.target.checked)
+					try {
+						socket.send(
+							JSON.stringify({
+								type_: 'ReqToggleTodo',
+								id: id,
+								checked: event.target.checked,
+							})
+						)
+					} catch (e) {
+						console.log('ERROR ReqToggleTodo: ', e)
+					}
+				}
+				itemCheckbox.addEventListener('change', toggleTodo(id))
 				const text = addElement(
 					itemLeftContainer,
 					'label',
@@ -89,6 +104,13 @@ socket.onmessage = (event) => {
 			)
 			break
 		case 'ResDeleteTodo':
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+				})
+			)
+			break
+		case 'ResToggleTodo':
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',

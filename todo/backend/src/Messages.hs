@@ -62,3 +62,15 @@ data ResDeleteTodo = ResDeleteTodo
   { type_ :: Proxy.Proxy "ResDeleteTodo"
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ReqToggleTodo = ReqToggleTodo
+  { type_ :: Proxy.Proxy "ReqToggleTodo"
+  , id :: Integer
+  , checked :: Bool
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ResToggleTodo = ResToggleTodo
+  { type_ :: Proxy.Proxy "ResToggleTodo"
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

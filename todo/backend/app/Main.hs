@@ -5,6 +5,7 @@ import qualified Messages as Msg
 import qualified Database as Db
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
+import qualified Api.Types.UTodoListItem as UTodoListItem
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -131,6 +132,7 @@ handleUserMessage msg (user, conn) state = do
   let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
   let reqCreateTodoMessage :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
   let reqDeleteTodo :: Maybe Msg.ReqDeleteTodo = Aeson.decode . cs $ msg
+  let reqToggleTodo :: Maybe Msg.ReqToggleTodo = Aeson.decode . cs $ msg
 
   if
     | Maybe.isJust reqTodoListMessage -> do
@@ -144,6 +146,13 @@ handleUserMessage msg (user, conn) state = do
     | Maybe.isJust reqDeleteTodo -> do
       Db.deleteTodo $ (Msg.id :: Msg.ReqDeleteTodo -> Integer) (Maybe.fromJust reqDeleteTodo)
       sendMessage conn Msg.ResDeleteTodo {}
+    | Maybe.isJust reqToggleTodo -> do
+      let itemId = (Msg.id :: Msg.ReqToggleTodo -> Integer) (Maybe.fromJust reqToggleTodo)
+      let checked = (Msg.checked :: Msg.ReqToggleTodo -> Bool) (Maybe.fromJust reqToggleTodo)
+      Db.updateTodo itemId UTodoListItem.UTodoListItem
+        { checked = checked
+        }
+      sendMessage conn Msg.ResToggleTodo {}
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
