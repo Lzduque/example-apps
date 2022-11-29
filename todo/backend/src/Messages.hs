@@ -21,7 +21,6 @@ instance {-# OVERLAPPING #-} TypeLits.KnownSymbol s => Aeson.FromJSON (Proxy.Pro
 
 data ReqConnection = ReqConnection
   { type_ :: Proxy.Proxy "ReqConnection"
-  , userId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -72,5 +71,17 @@ data ReqToggleTodo = ReqToggleTodo
 
 data ResToggleTodo = ResToggleTodo
   { type_ :: Proxy.Proxy "ResToggleTodo"
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ReqRegister = ReqRegister
+  { type_ :: Proxy.Proxy "ReqRegister"
+  , reqRegisterEmail :: T.Text
+  , reqRegisterPassword :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ResRegister = ResRegister
+  { type_ :: Proxy.Proxy "ResRegister"
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

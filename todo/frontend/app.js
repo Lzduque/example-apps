@@ -10,14 +10,14 @@
 const socket = new WebSocket('ws://127.0.0.1:9160')
 
 socket.onopen = (event) => {
-	console.log('[open] Connection established')
-	console.log('Sending to server')
+	console.log('onopen')
 	socket.send(
 		JSON.stringify({
 			type_: 'ReqConnection',
-			userId: '1234',
 		})
 	)
+	console.log('[open] Connection established')
+	console.log('Sending to server')
 }
 
 socket.onmessage = (event) => {
@@ -53,13 +53,12 @@ socket.onmessage = (event) => {
 					itemCheckboxAttrs.filter(isTruthy)
 				)
 				const toggleTodo = (id) => (event) => {
-					console.log('event.target.checked: ', event.target.checked)
 					try {
 						socket.send(
 							JSON.stringify({
 								type_: 'ReqToggleTodo',
 								reqToggleTodoId: id,
-								checked: event.target.checked,
+								checked: itemCheckbox.checked,
 							})
 						)
 					} catch (e) {
@@ -140,7 +139,7 @@ socket.onerror = (error) => {
 }
 
 // Mock for view
-const signedIn = true
+let signedIn = false
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
@@ -197,6 +196,26 @@ const showSignInView = () => {
 		[],
 		'Submit'
 	)
+	const sendRegister = (event) => {
+		console.log('event: ', event)
+		console.log('emailField1.value: ', emailField1.value)
+		console.log('passwordField1.value: ', passwordField1.value)
+		try {
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqRegister',
+					email: emailField1.value,
+					password: passwordField1.value,
+				})
+			)
+			emailField1.value = ''
+			passwordField1.value = ''
+		} catch (e) {
+			console.log('ERROR ReqRegister: ', e)
+		}
+	}
+
+	submitButton1.addEventListener('click', sendRegister)
 
 	// Horizontal line
 	const horizontalLine = addElement(

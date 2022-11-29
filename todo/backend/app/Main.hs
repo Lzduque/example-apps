@@ -19,29 +19,12 @@ import qualified GHC.Generics as Generics
 import qualified Data.Aeson as Aeson
 import qualified Data.Proxy as Proxy
 import Data.String.Conversions (cs)
+import qualified Data.UUID as UUID
+import qualified Data.UUID.V4 as UUID
 
-type UserId = T.Text
-type Client = (UserId, WS.Connection)
+type WSId = UUID.UUID
+type Client = (WSId, WS.Connection)
 type ServerState = [Client]
-
--- items :: [RTodoListItem.RTodoListItem]
--- items =
---   [ RTodoListItem.RTodoListItem
---     { id = 1
---     , name = "do the laundry"
---     , checked = False
---     }
---   , RTodoListItem.RTodoListItem
---     { id = 2
---     , name = "grocery shopping"
---     , checked = True
---     }
---   , RTodoListItem.RTodoListItem
---     { id = 3
---     , name = "clean Maya's littler box every day"
---     , checked = False
---     }
---   ]
 
 newServerState :: ServerState
 newServerState = []
@@ -73,7 +56,7 @@ application state pending = do
   WS.withPingThread conn 30 (return ()) $ do
     msg :: T.Text <- WS.receiveData conn
     T.putStrLn $ "Message received: " <> msg
-    clients <- Conc.readMVar state
+    -- clients <- Conc.readMVar state
     handleConnectionMessage msg conn state
     
 handleConnectionMessage
@@ -86,8 +69,8 @@ handleConnectionMessage msg conn state = do
   if
     -- Invitation to listen to messages from a specific client
     | Maybe.isJust reqConnectionMessage -> do
-      let userId' = Msg.userId (Maybe.fromJust reqConnectionMessage)
-      let client = (userId', conn)
+      wsId <- UUID.nextRandom
+      let client = (wsId, conn)
       handleNewConnection client state
     | otherwise -> do
       T.putStrLn $ "Message not recognized (connection): " <> msg
@@ -100,15 +83,16 @@ handleNewConnection client state = do
   clients <- Conc.readMVar state
   if
     | clientExists client clients -> do
-      T.putStrLn $ "User already exists: " <> fst client
-    | otherwise -> flip Except.finally (disconnect client state) $ do
-      Conc.modifyMVar_ state $ \s -> do
-        let s' = addClient client s
-        -- broadcast (fst client <> " joined") s'
-        return s'
-      let conn = snd client
-      sendMessage conn Msg.ResConnection { type_ = Proxy.Proxy }
-      connect client state
+      T.putStrLn $ "User already exists: " <> UUID.toText (fst client)
+    | otherwise -> do
+      flip Except.finally (disconnect client state) $ do
+        Conc.modifyMVar_ state $ \s -> do
+          let s' = addClient client s
+          -- broadcast (fst client <> " joined") s'
+          return s'
+        let conn = snd client
+        sendMessage conn Msg.ResConnection { type_ = Proxy.Proxy }
+        connect client state
 
 disconnect :: Client -> Conc.MVar ServerState -> IO ()
 disconnect client state = do
@@ -116,28 +100,37 @@ disconnect client state = do
   s <- Conc.modifyMVar state $ \s -> do
     let s' = removeClient client s
     return (s', s')
-  broadcast (fst client <> " disconnected") s
+  print "SOMEONE DISCONNECTED"
+  broadcast (UUID.toText (fst client) <> " disconnected") s
 
 -- This is to continuously listen for messages from a specific client
 connect :: Client -> Conc.MVar ServerState -> IO ()
-connect (user, conn) state = M.forever $ do
+connect (wsId, conn) state = M.forever $ do
   msg <- WS.receiveData conn
-  handleUserMessage msg (user, conn) state
+  handleClientMessage msg (wsId, conn) state
 
-handleUserMessage :: T.Text -> Client -> Conc.MVar ServerState -> IO ()
-handleUserMessage msg (user, conn) state = do
+handleClientMessage :: T.Text -> Client -> Conc.MVar ServerState -> IO ()
+handleClientMessage msg (wsId, conn) state = do
   -- DEBUGGING
   T.putStrLn $ "New msg: " <> msg
-  T.putStrLn $ "From client: " <> user
+  T.putStrLn $ "From client: " <> UUID.toText wsId
 
+  let reqRegister :: Maybe Msg.ReqRegister = Aeson.decode . cs $ msg
   let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
   let reqCreateTodoMessage :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
   let reqDeleteTodo :: Maybe Msg.ReqDeleteTodo = Aeson.decode . cs $ msg
   let reqToggleTodo :: Maybe Msg.ReqToggleTodo = Aeson.decode . cs $ msg
 
   if
+    | Maybe.isJust reqRegister -> do
+      -- let email = _ -- convert to lowercase
+      -- validate that user does not exist
+      -- add user to DB
+
+      -- (also create session)
+      sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
     | Maybe.isJust reqTodoListMessage -> do
-      sendTodoList (user, conn) state
+      sendTodoList (wsId, conn) state
     | Maybe.isJust reqCreateTodoMessage -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodoMessage)
       Db.createTodo CTodoListItem.CTodoListItem
@@ -158,7 +151,7 @@ handleUserMessage msg (user, conn) state = do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
-sendTodoList (user, conn) state = do
+sendTodoList (wsId, conn) state = do
   items <- Db.getTodoList
   let msg = Msg.ResTodoList { type_ = Proxy.Proxy, items = items }
   sendMessage conn msg
