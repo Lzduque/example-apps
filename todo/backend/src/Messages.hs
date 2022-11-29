@@ -54,7 +54,7 @@ data ResCreateTodo = ResCreateTodo
 
 data ReqDeleteTodo = ReqDeleteTodo
   { type_ :: Proxy.Proxy "ReqDeleteTodo"
-  , id :: Integer
+  , reqDeleteTodoId :: Integer
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -65,7 +65,7 @@ data ResDeleteTodo = ResDeleteTodo
 
 data ReqToggleTodo = ReqToggleTodo
   { type_ :: Proxy.Proxy "ReqToggleTodo"
-  , id :: Integer
+  , reqToggleTodoId :: Integer
   , checked :: Bool
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

@@ -17,6 +17,7 @@ import qualified Control.Exception as Except
 import qualified Data.Maybe as Maybe
 import qualified GHC.Generics as Generics
 import qualified Data.Aeson as Aeson
+import qualified Data.Proxy as Proxy
 import Data.String.Conversions (cs)
 
 type UserId = T.Text
@@ -106,7 +107,7 @@ handleNewConnection client state = do
         -- broadcast (fst client <> " joined") s'
         return s'
       let conn = snd client
-      sendMessage conn Msg.ResConnection {}
+      sendMessage conn Msg.ResConnection { type_ = Proxy.Proxy }
       connect client state
 
 disconnect :: Client -> Conc.MVar ServerState -> IO ()
@@ -142,24 +143,24 @@ handleUserMessage msg (user, conn) state = do
       Db.createTodo CTodoListItem.CTodoListItem
         { name = name
         }
-      sendMessage conn Msg.ResCreateTodo {}
+      sendMessage conn Msg.ResCreateTodo { type_ = Proxy.Proxy }
     | Maybe.isJust reqDeleteTodo -> do
-      Db.deleteTodo $ (Msg.id :: Msg.ReqDeleteTodo -> Integer) (Maybe.fromJust reqDeleteTodo)
-      sendMessage conn Msg.ResDeleteTodo {}
+      Db.deleteTodo $ Msg.reqDeleteTodoId (Maybe.fromJust reqDeleteTodo)
+      sendMessage conn Msg.ResDeleteTodo { type_ = Proxy.Proxy }
     | Maybe.isJust reqToggleTodo -> do
-      let itemId = (Msg.id :: Msg.ReqToggleTodo -> Integer) (Maybe.fromJust reqToggleTodo)
-      let checked = (Msg.checked :: Msg.ReqToggleTodo -> Bool) (Maybe.fromJust reqToggleTodo)
+      let itemId = Msg.reqToggleTodoId (Maybe.fromJust reqToggleTodo)
+      let checked = Msg.checked (Maybe.fromJust reqToggleTodo)
       Db.updateTodo itemId UTodoListItem.UTodoListItem
         { checked = checked
         }
-      sendMessage conn Msg.ResToggleTodo {}
+      sendMessage conn Msg.ResToggleTodo { type_ = Proxy.Proxy }
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
 sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
 sendTodoList (user, conn) state = do
   items <- Db.getTodoList
-  let msg = Msg.ResTodoList { items = items }
+  let msg = Msg.ResTodoList { type_ = Proxy.Proxy, items = items }
   sendMessage conn msg
 
 -- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string

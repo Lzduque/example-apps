@@ -58,7 +58,7 @@ socket.onmessage = (event) => {
 						socket.send(
 							JSON.stringify({
 								type_: 'ReqToggleTodo',
-								id: id,
+								reqToggleTodoId: id,
 								checked: event.target.checked,
 							})
 						)
@@ -86,7 +86,7 @@ socket.onmessage = (event) => {
 						socket.send(
 							JSON.stringify({
 								type_: 'ReqDeleteTodo',
-								id: id,
+								reqDeleteTodoId: id,
 							})
 						)
 					} catch (e) {
