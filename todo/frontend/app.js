@@ -230,6 +230,14 @@ const showSignInView = () => {
 		}
 	}
 	submitButton1.addEventListener('click', sendRegister)
+	emailField1.addEventListener(
+		'keydown',
+		(event) => event.key === 'Enter' && sendRegister()
+	)
+	passwordField1.addEventListener(
+		'keydown',
+		(event) => event.key === 'Enter' && sendRegister()
+	)
 
 	// Horizontal line
 	const horizontalLine = addElement(
@@ -301,6 +309,14 @@ const showSignInView = () => {
 		}
 	}
 	submitButton2.addEventListener('click', sendSignIn)
+	emailField2.addEventListener(
+		'keydown',
+		(event) => event.key === 'Enter' && sendSignIn()
+	)
+	passwordField2.addEventListener(
+		'keydown',
+		(event) => event.key === 'Enter' && sendSignIn()
+	)
 }
 
 const showListView = () => {
