@@ -6,6 +6,7 @@ import qualified Database as Db
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Api.Types.UTodoListItem as UTodoListItem
+import qualified Api.Types.CUser as CUser
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -116,23 +117,40 @@ handleClientMessage msg (wsId, conn) state = do
   T.putStrLn $ "From client: " <> UUID.toText wsId
 
   let reqRegister :: Maybe Msg.ReqRegister = Aeson.decode . cs $ msg
-  let reqTodoListMessage :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
-  let reqCreateTodoMessage :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
+  let reqSignIn :: Maybe Msg.ReqSignIn = Aeson.decode . cs $ msg
+  let reqTodoList :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
+  let reqCreateTodo :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
   let reqDeleteTodo :: Maybe Msg.ReqDeleteTodo = Aeson.decode . cs $ msg
   let reqToggleTodo :: Maybe Msg.ReqToggleTodo = Aeson.decode . cs $ msg
 
   if
     | Maybe.isJust reqRegister -> do
-      -- let email = _ -- convert to lowercase
+      let email = T.toLower (Msg.reqRegisterEmail (Maybe.fromJust reqRegister))
+      let password = Msg.reqRegisterPassword (Maybe.fromJust reqRegister)
       -- validate that user does not exist
-      -- add user to DB
-
-      -- (also create session)
-      sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
-    | Maybe.isJust reqTodoListMessage -> do
+      mUser <- Db.findUserByEmail email
+      case mUser of 
+        Just user -> do
+          print "Error, user already registered"
+          -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
+        Nothing -> do
+          Db.createUser CUser.CUser
+            { email = email
+            , password = password
+            }
+          -- (also create session)
+          sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
+    | Maybe.isJust reqSignIn -> do
+      let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
+      let password = Msg.reqSignInPassword (Maybe.fromJust reqSignIn)
+      -- validate auth
+      -- should this be a new type? AuthUser { email, password }
+      -- Db.authenticateUser email password
+      sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy } -- TODO: send back token
+    | Maybe.isJust reqTodoList -> do
       sendTodoList (wsId, conn) state
-    | Maybe.isJust reqCreateTodoMessage -> do
-      let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodoMessage)
+    | Maybe.isJust reqCreateTodo -> do
+      let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
       Db.createTodo CTodoListItem.CTodoListItem
         { name = name
         }

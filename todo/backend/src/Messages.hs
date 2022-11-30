@@ -85,3 +85,15 @@ data ResRegister = ResRegister
   { type_ :: Proxy.Proxy "ResRegister"
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ReqSignIn = ReqSignIn
+  { type_ :: Proxy.Proxy "ReqSignIn"
+  , reqSignInEmail :: T.Text
+  , reqSignInPassword :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ResSignIn = ResSignIn
+  { type_ :: Proxy.Proxy "ResSignIn"
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

@@ -25,6 +25,9 @@ socket.onmessage = (event) => {
 	console.log(`[message] Data received from server: `)
 	console.log(message)
 	switch (message.type_) {
+		case 'ResRegister':
+			// TODO: user should be signed in, so update the view
+			break
 		case 'ResConnection':
 			console.log(`[message] Connection with server established!`)
 			socket.send(
@@ -204,8 +207,8 @@ const showSignInView = () => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqRegister',
-					email: emailField1.value,
-					password: passwordField1.value,
+					reqRegisterEmail: emailField1.value,
+					reqRegisterPassword: passwordField1.value,
 				})
 			)
 			emailField1.value = ''
@@ -214,7 +217,6 @@ const showSignInView = () => {
 			console.log('ERROR ReqRegister: ', e)
 		}
 	}
-
 	submitButton1.addEventListener('click', sendRegister)
 
 	// Horizontal line
@@ -268,6 +270,25 @@ const showSignInView = () => {
 		[],
 		'Submit'
 	)
+	const sendSignIn = (event) => {
+		console.log('event: ', event)
+		console.log('emailField2.value: ', emailField2.value)
+		console.log('passwordField2.value: ', passwordField2.value)
+		try {
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqSignIn',
+					reqSignInEmail: emailField2.value,
+					reqSignInPassword: passwordField2.value,
+				})
+			)
+			emailField2.value = ''
+			passwordField2.value = ''
+		} catch (e) {
+			console.log('ERROR ReqSignIn: ', e)
+		}
+	}
+	submitButton2.addEventListener('click', sendSignIn)
 }
 
 const showListView = () => {

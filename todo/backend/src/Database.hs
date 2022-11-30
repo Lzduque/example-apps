@@ -4,11 +4,15 @@ module Database where
 import qualified Database.SQLite.Simple as SQL
 import qualified Database.SQLite3 as SQLite
 import qualified Data.Text.IO as T
+import qualified Data.Text as T
 
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Api.Types.UTodoListItem as UTodoListItem
+import qualified Api.Types.CUser as CUser
+import qualified Api.Types.RUser as RUser
 import qualified Database.Types.TodoListItem as DbTodoListItem
+import qualified Database.Types.User as DbUser
 
 dbFile :: FilePath
 dbFile = "todo.db"
@@ -76,3 +80,33 @@ deleteTodo itemId = do
   conn <- connect
   SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId]
   SQL.close conn
+
+-- readUser :: Integer -> IO RUser.RUser
+
+findUserByEmail :: T.Text -> IO (Maybe RUser.RUser)
+findUserByEmail email = do
+  conn <- connect
+  rows :: [DbUser.User] <- SQL.query conn "SELECT * FROM user WHERE email = ?" [email]
+  SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RUser.RUser
+        { RUser.id = DbUser.id x
+        , RUser.email = DbUser.email x
+        , RUser.password = DbUser.password x
+        , RUser.createdAt = DbUser.createdAt x
+        , RUser.updatedAt = DbUser.updatedAt x
+        }) 
+
+createUser :: CUser.CUser -> IO ()
+createUser user = do
+  conn <- connect
+  let email = CUser.email user
+  let password = CUser.password user
+  SQL.execute conn "INSERT INTO user (email, password) VALUES (?, ?)" (email, password)
+  SQL.close conn
+
+-- readUsers :: IO [RUser.RUser]
+-- readUsers = do
+--   conn <- connect
+--   users :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM user"

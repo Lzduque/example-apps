@@ -27,6 +27,8 @@ library
         Api.Types.RTodoListItem,
         Api.Types.CTodoListItem,
         Api.Types.UTodoListItem,
+        Api.Types.CUser,
+        Api.Types.RUser,
         Database.Types.TodoListItem,
         Database.Types.User,
         Database
