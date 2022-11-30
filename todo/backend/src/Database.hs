@@ -91,18 +91,19 @@ findUserByEmail email = do
   case rows of
     [] -> return Nothing
     (x:_) -> return (Just RUser.RUser
-        { RUser.id = DbUser.id x
-        , RUser.email = DbUser.email x
-        , RUser.password = DbUser.password x
-        , RUser.createdAt = DbUser.createdAt x
-        , RUser.updatedAt = DbUser.updatedAt x
-        }) 
+      { RUser.id = DbUser.id x
+      , RUser.email = DbUser.email x
+      , RUser.password = DbUser.password x
+      , RUser.createdAt = DbUser.createdAt x
+      , RUser.updatedAt = DbUser.updatedAt x
+      }) 
 
 createUser :: CUser.CUser -> IO ()
 createUser user = do
   conn <- connect
   let email = CUser.email user
   let password = CUser.password user
+  -- TODO: hash password
   SQL.execute conn "INSERT INTO user (email, password) VALUES (?, ?)" (email, password)
   SQL.close conn
 
@@ -110,3 +111,21 @@ createUser user = do
 -- readUsers = do
 --   conn <- connect
 --   users :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM user"
+
+authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
+authenticateUser email password = do
+  conn <- connect
+  -- TODO: compare hashed password
+  rows :: [DbUser.User] <-
+    SQL.query conn "SELECT * FROM user WHERE email = ? AND password = ?"
+    (email, password)
+  SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RUser.RUser
+      { RUser.id = DbUser.id x
+      , RUser.email = DbUser.email x
+      , RUser.password = DbUser.password x
+      , RUser.createdAt = DbUser.createdAt x
+      , RUser.updatedAt = DbUser.updatedAt x
+      }) 

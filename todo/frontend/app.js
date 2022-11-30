@@ -25,11 +25,22 @@ socket.onmessage = (event) => {
 	console.log(`[message] Data received from server: `)
 	console.log(message)
 	switch (message.type_) {
-		case 'ResRegister':
-			// TODO: user should be signed in, so update the view
-			break
 		case 'ResConnection':
+			// TODO: sign in if we have a session
 			console.log(`[message] Connection with server established!`)
+			// socket.send(
+			// 	JSON.stringify({
+			// 		type_: 'ReqTodoList',
+			// 	})
+			// )
+			break
+		case 'ResRegister':
+			// TODO: session handling
+			// TODO: user should also be signed in, so update the view
+			break
+		case 'ResSignIn':
+			// TODO: session handling
+			showListView()
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
@@ -146,6 +157,7 @@ let signedIn = false
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
+	app.innerHTML = ''
 
 	const signInViewContainer = addElement(app, 'div', 'signInViewContainer')
 
@@ -293,6 +305,7 @@ const showSignInView = () => {
 
 const showListView = () => {
 	const app = document.getElementById('app')
+	app.innerHTML = ''
 
 	// Top Bar
 	const topBar = addElement(app, 'div', 'topBar')
@@ -354,9 +367,5 @@ const showListView = () => {
 }
 
 window.onload = (event) => {
-	if (signedIn) {
-		showListView()
-	} else {
-		showSignInView()
-	}
+	showSignInView()
 }

@@ -131,7 +131,7 @@ handleClientMessage msg (wsId, conn) state = do
       mUser <- Db.findUserByEmail email
       case mUser of 
         Just user -> do
-          print "Error, user already registered"
+          print "Error, user already registered" -- TEMP
           -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
         Nothing -> do
           Db.createUser CUser.CUser
@@ -145,8 +145,15 @@ handleClientMessage msg (wsId, conn) state = do
       let password = Msg.reqSignInPassword (Maybe.fromJust reqSignIn)
       -- validate auth
       -- should this be a new type? AuthUser { email, password }
-      -- Db.authenticateUser email password
-      sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy } -- TODO: send back token
+      mUser <- Db.authenticateUser email password
+      case mUser of
+        Nothing -> do
+          -- auth failed
+          print "Auth failed" -- TEMP
+          -- TODO: send error message
+        Just user -> do
+          -- auth succeeded
+          sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy } -- TODO: send back token
     | Maybe.isJust reqTodoList -> do
       sendTodoList (wsId, conn) state
     | Maybe.isJust reqCreateTodo -> do
