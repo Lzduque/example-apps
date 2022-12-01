@@ -5,6 +5,10 @@ import qualified Database.SQLite.Simple as SQL
 import qualified Database.SQLite3 as SQLite
 import qualified Data.Text.IO as T
 import qualified Data.Text as T
+import qualified Crypto.BCrypt as Crypto
+import qualified Data.Maybe as Maybe
+import Data.String.Conversions (cs)
+import qualified Control.Exception as E
 
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
@@ -62,8 +66,8 @@ getTodoList = do
 createTodo :: CTodoListItem.CTodoListItem -> IO ()
 createTodo todoItem = do
   conn <- connect
-  let todo = CTodoListItem.name todoItem
-  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [todo]
+  let name = CTodoListItem.name todoItem
+  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [name :: T.Text]
   SQL.close conn
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
@@ -72,13 +76,16 @@ updateTodo :: Integer -> UTodoListItem.UTodoListItem -> IO ()
 updateTodo itemId todoItem = do
   conn <- connect
   let checked = UTodoListItem.checked todoItem
-  SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?" (checked, itemId)
+  SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?"
+    (checked :: Bool
+    , itemId :: Integer
+    )
   SQL.close conn
 
 deleteTodo :: Integer -> IO ()
 deleteTodo itemId = do
   conn <- connect
-  SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId]
+  SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId :: Integer]
   SQL.close conn
 
 -- readUser :: Integer -> IO RUser.RUser
@@ -86,14 +93,14 @@ deleteTodo itemId = do
 findUserByEmail :: T.Text -> IO (Maybe RUser.RUser)
 findUserByEmail email = do
   conn <- connect
-  rows :: [DbUser.User] <- SQL.query conn "SELECT * FROM user WHERE email = ?" [email]
+  rows :: [DbUser.User] <- SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]
+  print $ "email: " ++ (show email) -- TEMP
   SQL.close conn
   case rows of
     [] -> return Nothing
     (x:_) -> return (Just RUser.RUser
       { RUser.id = DbUser.id x
       , RUser.email = DbUser.email x
-      , RUser.password = DbUser.password x
       , RUser.createdAt = DbUser.createdAt x
       , RUser.updatedAt = DbUser.updatedAt x
       }) 
@@ -103,8 +110,11 @@ createUser user = do
   conn <- connect
   let email = CUser.email user
   let password = CUser.password user
-  -- TODO: hash password
-  SQL.execute conn "INSERT INTO user (email, password) VALUES (?, ?)" (email, password)
+  hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
+  SQL.execute conn "INSERT INTO User (email, password) VALUES (?, ?)"
+    ( email :: T.Text
+    , cs (Maybe.fromJust hashedPassword) :: T.Text
+    )
   SQL.close conn
 
 -- readUsers :: IO [RUser.RUser]
@@ -115,17 +125,23 @@ createUser user = do
 authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
 authenticateUser email password = do
   conn <- connect
-  -- TODO: compare hashed password
-  rows :: [DbUser.User] <-
-    SQL.query conn "SELECT * FROM user WHERE email = ? AND password = ?"
-    (email, password)
+  rows :: [DbUser.User] <- E.catch (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text])
+    (\e -> do
+      print $ "SQL Error: " ++ show (e :: E.SomeException)
+      return [])
+  print $ "rows: " ++ (show rows) -- TEMP
   SQL.close conn
   case rows of
     [] -> return Nothing
-    (x:_) -> return (Just RUser.RUser
-      { RUser.id = DbUser.id x
-      , RUser.email = DbUser.email x
-      , RUser.password = DbUser.password x
-      , RUser.createdAt = DbUser.createdAt x
-      , RUser.updatedAt = DbUser.updatedAt x
-      }) 
+    (x:_) -> do
+      let dbPassword = DbUser.password x
+      case Crypto.validatePassword (cs dbPassword) (cs password) of 
+        False -> do
+          print "invalid password" -- TEMP
+          return Nothing
+        True -> return (Just RUser.RUser
+          { RUser.id = DbUser.id x
+          , RUser.email = DbUser.email x
+          , RUser.createdAt = DbUser.createdAt x
+          , RUser.updatedAt = DbUser.updatedAt x
+          }) 

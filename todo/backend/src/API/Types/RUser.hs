@@ -8,7 +8,6 @@ import qualified Data.Time.Clock as Time
 data RUser = RUser
   { id :: Integer
   , email :: T.Text
-  , password :: T.Text
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
   }

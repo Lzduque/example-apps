@@ -146,6 +146,7 @@ handleClientMessage msg (wsId, conn) state = do
       -- validate auth
       -- should this be a new type? AuthUser { email, password }
       mUser <- Db.authenticateUser email password
+      print $ "mUser: " ++ (show mUser)
       case mUser of
         Nothing -> do
           -- auth failed
