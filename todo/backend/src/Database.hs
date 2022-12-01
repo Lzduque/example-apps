@@ -48,10 +48,19 @@ populate = do
   putStrLn $ "DB populated"
   SQL.close conn
 
+handleQuery :: IO a -> a -> IO a
+handleQuery query baseValue = E.catch
+  query
+  (\e -> do
+    print $ "SQL Error: " ++ show (e :: E.SomeException)
+    return baseValue)
+
 getTodoList :: IO [RTodoListItem.RTodoListItem]
 getTodoList = do
   conn <- connect
-  items :: [DbTodoListItem.TodoListItem] <- SQL.query_ conn "SELECT * FROM TodoListItem"
+  items :: [DbTodoListItem.TodoListItem] <- handleQuery 
+    (SQL.query_ conn "SELECT * FROM TodoListItem")
+    []
   let apiItems :: [RTodoListItem.RTodoListItem] = flip map items $ \item ->
         RTodoListItem.RTodoListItem
         { RTodoListItem.id = DbTodoListItem.id item
@@ -67,7 +76,9 @@ createTodo :: CTodoListItem.CTodoListItem -> IO ()
 createTodo todoItem = do
   conn <- connect
   let name = CTodoListItem.name todoItem
-  SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [name :: T.Text]
+  handleQuery 
+    (SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [name :: T.Text])
+    ()
   SQL.close conn
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
@@ -76,16 +87,21 @@ updateTodo :: Integer -> UTodoListItem.UTodoListItem -> IO ()
 updateTodo itemId todoItem = do
   conn <- connect
   let checked = UTodoListItem.checked todoItem
-  SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?"
-    (checked :: Bool
-    , itemId :: Integer
+  handleQuery 
+    (SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?"
+      (checked :: Bool
+      , itemId :: Integer
+      )
     )
+    ()
   SQL.close conn
 
 deleteTodo :: Integer -> IO ()
 deleteTodo itemId = do
   conn <- connect
-  SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId :: Integer]
+  handleQuery 
+    (SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId :: Integer])
+    ()
   SQL.close conn
 
 -- readUser :: Integer -> IO RUser.RUser
@@ -93,7 +109,7 @@ deleteTodo itemId = do
 findUserByEmail :: T.Text -> IO (Maybe RUser.RUser)
 findUserByEmail email = do
   conn <- connect
-  rows :: [DbUser.User] <- SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]
+  rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
   print $ "email: " ++ (show email) -- TEMP
   SQL.close conn
   case rows of
@@ -111,14 +127,12 @@ createUser user = do
   let email = CUser.email user
   let password = CUser.password user
   hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
-  E.catch
+  handleQuery 
     (SQL.execute conn "INSERT INTO User (email, password) VALUES (?, ?)"
       ( email :: T.Text
-      , cs (Maybe.fromJust hashedPassword) :: T.Text
-      ))
-    (\e -> do
-      print $ "SQL Error: " ++ show (e :: E.SomeException)
-      return ())
+      , cs (Maybe.fromJust hashedPassword) :: T.Text)
+    )
+    ()
   SQL.close conn
 
 -- readUsers :: IO [RUser.RUser]
@@ -129,10 +143,7 @@ createUser user = do
 authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
 authenticateUser email password = do
   conn <- connect
-  rows :: [DbUser.User] <- E.catch (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text])
-    (\e -> do
-      print $ "SQL Error: " ++ show (e :: E.SomeException)
-      return [])
+  rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
   print $ "rows: " ++ (show rows) -- TEMP
   SQL.close conn
   case rows of

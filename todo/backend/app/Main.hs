@@ -150,7 +150,7 @@ handleClientMessage msg (wsId, conn) state = do
       case mUser of
         Nothing -> do
           -- auth failed
-          print "Auth failed" -- TEMP
+          print "Auth failed, no user found" -- TEMP
           -- TODO: send error message
         Just user -> do
           -- auth succeeded
