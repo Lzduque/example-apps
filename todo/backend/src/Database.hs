@@ -111,10 +111,14 @@ createUser user = do
   let email = CUser.email user
   let password = CUser.password user
   hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
-  SQL.execute conn "INSERT INTO User (email, password) VALUES (?, ?)"
-    ( email :: T.Text
-    , cs (Maybe.fromJust hashedPassword) :: T.Text
-    )
+  E.catch
+    (SQL.execute conn "INSERT INTO User (email, password) VALUES (?, ?)"
+      ( email :: T.Text
+      , cs (Maybe.fromJust hashedPassword) :: T.Text
+      ))
+    (\e -> do
+      print $ "SQL Error: " ++ show (e :: E.SomeException)
+      return ())
   SQL.close conn
 
 -- readUsers :: IO [RUser.RUser]
