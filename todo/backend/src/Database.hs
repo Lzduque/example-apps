@@ -9,14 +9,18 @@ import qualified Crypto.BCrypt as Crypto
 import qualified Data.Maybe as Maybe
 import Data.String.Conversions (cs)
 import qualified Control.Exception as E
+import qualified Data.UUID as UUID
+import qualified Data.UUID.V4 as UUID
 
 import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Api.Types.UTodoListItem as UTodoListItem
 import qualified Api.Types.CUser as CUser
 import qualified Api.Types.RUser as RUser
+import qualified Api.Types.RSession as RSession
 import qualified Database.Types.TodoListItem as DbTodoListItem
 import qualified Database.Types.User as DbUser
+import qualified Database.Types.Session as DbSession
 
 dbFile :: FilePath
 dbFile = "todo.db"
@@ -72,14 +76,24 @@ getTodoList = do
   SQL.close conn
   return apiItems
 
-createTodo :: CTodoListItem.CTodoListItem -> IO ()
+createTodo :: CTodoListItem.CTodoListItem -> IO (Maybe RTodoListItem.RTodoListItem)
 createTodo todoItem = do
   conn <- connect
   let name = CTodoListItem.name todoItem
-  handleQuery 
-    (SQL.execute conn "INSERT INTO TodoListItem (name) VALUES (?)" [name :: T.Text])
-    ()
+  let userId = CTodoListItem.userId todoItem
+  rows :: [DbTodoListItem.TodoListItem] <- handleQuery 
+    (SQL.query conn "INSERT INTO TodoListItem (name, userId) VALUES (?, ?) RETURNING *" (name :: T.Text, userId :: Integer))
+    []
   SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RTodoListItem.RTodoListItem
+      { RTodoListItem.id = DbTodoListItem.id x
+      , RTodoListItem.name = DbTodoListItem.name x
+      , RTodoListItem.checked = DbTodoListItem.checked x == 1
+      , RTodoListItem.createdAt = DbTodoListItem.createdAt x
+      , RTodoListItem.updatedAt = DbTodoListItem.updatedAt x
+      })
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
 
@@ -121,19 +135,27 @@ findUserByEmail email = do
       , RUser.updatedAt = DbUser.updatedAt x
       }) 
 
-createUser :: CUser.CUser -> IO ()
+createUser :: CUser.CUser -> IO (Maybe RUser.RUser)
 createUser user = do
   conn <- connect
   let email = CUser.email user
   let password = CUser.password user
   hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
-  handleQuery 
-    (SQL.execute conn "INSERT INTO User (email, password) VALUES (?, ?)"
+  rows :: [DbUser.User] <- handleQuery 
+    (SQL.query conn "INSERT INTO User (email, password) VALUES (?, ?) RETURNING *"
       ( email :: T.Text
       , cs (Maybe.fromJust hashedPassword) :: T.Text)
     )
-    ()
+    []
   SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RUser.RUser
+      { id = DbUser.id x
+      , email = DbUser.email x
+      , createdAt = DbUser.createdAt x
+      , updatedAt = DbUser.updatedAt x
+      })
 
 -- readUsers :: IO [RUser.RUser]
 -- readUsers = do
@@ -147,12 +169,14 @@ authenticateUser email password = do
   print $ "rows: " ++ (show rows) -- TEMP
   SQL.close conn
   case rows of
-    [] -> return Nothing
+    [] -> do
+      print "Error: no user found" -- TEMP
+      return Nothing
     (x:_) -> do
       let dbPassword = DbUser.password x
       case Crypto.validatePassword (cs dbPassword) (cs password) of 
         False -> do
-          print "invalid password" -- TEMP
+          print "Error: invalid password" -- TEMP
           return Nothing
         True -> return (Just RUser.RUser
           { RUser.id = DbUser.id x
@@ -160,3 +184,36 @@ authenticateUser email password = do
           , RUser.createdAt = DbUser.createdAt x
           , RUser.updatedAt = DbUser.updatedAt x
           }) 
+
+createSession :: RUser.RUser -> IO (Maybe RSession.RSession)
+createSession user = do
+  conn <- connect
+  let userId = RUser.id user
+  sessionId <- UUID.nextRandom
+  rows :: [DbSession.Session] <- handleQuery 
+    (SQL.query conn "INSERT INTO Session (id, userId) VALUES (?, ?) RETURNING *"
+      ( UUID.toText sessionId
+      , userId
+      )
+    )
+    []
+  SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RSession.RSession
+      { RSession.id = DbSession.id x
+      , RSession.userId = DbSession.userId x
+      })
+
+findSessionById :: T.Text -> IO (Maybe RSession.RSession)
+findSessionById sessionId = do
+  conn <- connect
+  rows :: [DbSession.Session] <- handleQuery (SQL.query conn "SELECT * FROM Session WHERE id = ?" [sessionId :: T.Text]) []
+  print $ "sessionId: " ++ (show sessionId) -- TEMP
+  SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just RSession.RSession
+      { RSession.id = DbSession.id x
+      , RSession.userId = DbSession.userId x
+      }) 

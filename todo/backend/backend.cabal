@@ -29,8 +29,11 @@ library
         Api.Types.UTodoListItem,
         Api.Types.CUser,
         Api.Types.RUser,
+        Api.Types.CSession,
+        Api.Types.RSession,
         Database.Types.TodoListItem,
         Database.Types.User,
+        Database.Types.Session,
         Database
 
     -- Modules included in this library but not exported.
@@ -47,7 +50,8 @@ library
         direct-sqlite == 2.3.27,
         time == 1.11.1.1,
         case-insensitive == 1.2.1.0,
-        bcrypt == 0.0.11
+        bcrypt == 0.0.11,
+        uuid == 1.3.15
 
     hs-source-dirs:   src
     default-language: Haskell2010

@@ -7,6 +7,7 @@ import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Api.Types.UTodoListItem as UTodoListItem
 import qualified Api.Types.CUser as CUser
+import qualified Api.Types.RSession as RSession
 
 import qualified Network.WebSockets as WS
 import qualified Data.Text as T
@@ -149,20 +150,33 @@ handleClientMessage msg (wsId, conn) state = do
       print $ "mUser: " ++ (show mUser)
       case mUser of
         Nothing -> do
-          -- auth failed
           print "Auth failed, no user found" -- TEMP
           -- TODO: send error message
-        Just user -> do
-          -- auth succeeded
-          sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy } -- TODO: send back token
+        Just user -> do -- auth succeeded
+          -- generate session
+          mSession <- Db.createSession user
+          case mSession of
+            Nothing -> do
+              print "Auth failed, couldn't create session" -- TEMP
+            Just session -> do
+              sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, sessionId = RSession.id session }
     | Maybe.isJust reqTodoList -> do
       sendTodoList (wsId, conn) state
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
-      Db.createTodo CTodoListItem.CTodoListItem
-        { name = name
-        }
-      sendMessage conn Msg.ResCreateTodo { type_ = Proxy.Proxy }
+      let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
+      mSession <- Db.findSessionById sessionId
+      case mSession of
+        Nothing -> do
+          print "Auth failed, couldn't retrieve session" -- TEMP
+          -- TODO: send error message
+        Just session -> do
+          let userId = RSession.userId session
+          Db.createTodo CTodoListItem.CTodoListItem
+            { name = name
+            , userId = userId
+            }
+          sendMessage conn Msg.ResCreateTodo { type_ = Proxy.Proxy }
     | Maybe.isJust reqDeleteTodo -> do
       Db.deleteTodo $ Msg.reqDeleteTodoId (Maybe.fromJust reqDeleteTodo)
       sendMessage conn Msg.ResDeleteTodo { type_ = Proxy.Proxy }

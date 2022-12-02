@@ -31,6 +31,7 @@ data ResConnection = ResConnection
 
 data ReqTodoList = ReqTodoList
   { type_ :: Proxy.Proxy "ReqTodoList"
+  , reqTodoListSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -43,6 +44,7 @@ data ResTodoList = ResTodoList
 data ReqCreateTodo = ReqCreateTodo
   { type_ :: Proxy.Proxy "ReqCreateTodo"
   , name :: T.Text
+  , reqCreateTodoSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -54,6 +56,7 @@ data ResCreateTodo = ResCreateTodo
 data ReqDeleteTodo = ReqDeleteTodo
   { type_ :: Proxy.Proxy "ReqDeleteTodo"
   , reqDeleteTodoId :: Integer
+  , reqDeleteTodoSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -66,6 +69,7 @@ data ReqToggleTodo = ReqToggleTodo
   { type_ :: Proxy.Proxy "ReqToggleTodo"
   , reqToggleTodoId :: Integer
   , checked :: Bool
+  , reqToggleTodoSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -95,5 +99,6 @@ data ReqSignIn = ReqSignIn
 
 data ResSignIn = ResSignIn
   { type_ :: Proxy.Proxy "ResSignIn"
+  , sessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
