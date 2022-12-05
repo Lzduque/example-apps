@@ -59,11 +59,12 @@ handleQuery query baseValue = E.catch
     print $ "SQL Error: " ++ show (e :: E.SomeException)
     return baseValue)
 
-getTodoList :: IO [RTodoListItem.RTodoListItem]
-getTodoList = do
+getTodoList :: Integer -> IO [RTodoListItem.RTodoListItem]
+getTodoList userId = do
   conn <- connect
   items :: [DbTodoListItem.TodoListItem] <- handleQuery 
-    (SQL.query_ conn "SELECT * FROM TodoListItem")
+    (SQL.query conn "SELECT * FROM TodoListItem WHERE userId = ?" [userId :: Integer]
+    )
     []
   let apiItems :: [RTodoListItem.RTodoListItem] = flip map items $ \item ->
         RTodoListItem.RTodoListItem
@@ -72,6 +73,7 @@ getTodoList = do
         , RTodoListItem.checked = DbTodoListItem.checked item == 1
         , RTodoListItem.createdAt = DbTodoListItem.createdAt item
         , RTodoListItem.updatedAt = DbTodoListItem.updatedAt item
+        , RTodoListItem.userId = DbTodoListItem.userId item
         }
   SQL.close conn
   return apiItems
@@ -93,6 +95,7 @@ createTodo todoItem = do
       , RTodoListItem.checked = DbTodoListItem.checked x == 1
       , RTodoListItem.createdAt = DbTodoListItem.createdAt x
       , RTodoListItem.updatedAt = DbTodoListItem.updatedAt x
+      , RTodoListItem.userId = DbTodoListItem.userId x
       })
 
 -- readTodo :: Integer -> IO RTodoListItem.RTodoListItem
@@ -219,3 +222,14 @@ findSessionById sessionId = do
       { RSession.id = DbSession.id x
       , RSession.userId = DbSession.userId x
       }) 
+
+findUserIdBySessionId :: T.Text -> IO (Maybe Integer)
+findUserIdBySessionId sessionId = do
+  conn <- connect
+  rows :: [SQL.Only Integer] <- handleQuery (SQL.query conn "SELECT DISTINCT userId FROM Session WHERE id = ?" [sessionId :: T.Text]) []
+  print $ "sessionId: " ++ (show sessionId) -- TEMP
+  print $ "rows: " ++ (show rows) -- TEMP
+  SQL.close conn
+  case rows of
+    [] -> return Nothing
+    (x:_) -> return (Just (SQL.fromOnly x)) 

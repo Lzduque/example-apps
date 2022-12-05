@@ -8,6 +8,7 @@
 // 		userId :: string
 // }
 const socket = new WebSocket('ws://127.0.0.1:9160')
+let sessionId
 
 socket.onopen = (event) => {
 	console.log('onopen')
@@ -41,9 +42,11 @@ socket.onmessage = (event) => {
 		case 'ResSignIn':
 			// TODO: session handling
 			showListView()
+			sessionId = message.sessionId
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
+					reqTodoListSessionId: sessionId,
 				})
 			)
 			break
@@ -73,6 +76,7 @@ socket.onmessage = (event) => {
 								type_: 'ReqToggleTodo',
 								reqToggleTodoId: id,
 								checked: itemCheckbox.checked,
+								reqToggleTodoSessionId: sessionId,
 							})
 						)
 					} catch (e) {
@@ -100,6 +104,7 @@ socket.onmessage = (event) => {
 							JSON.stringify({
 								type_: 'ReqDeleteTodo',
 								reqDeleteTodoId: id,
+								reqDeleteTodoSessionId: sessionId,
 							})
 						)
 					} catch (e) {
@@ -113,6 +118,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
+					reqTodoListSessionId: sessionId,
 				})
 			)
 			break
@@ -120,6 +126,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
+					reqTodoListSessionId: sessionId,
 				})
 			)
 			break
@@ -127,6 +134,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
+					reqTodoListSessionId: sessionId,
 				})
 			)
 			break
@@ -352,6 +360,7 @@ const showListView = () => {
 				JSON.stringify({
 					type_: 'ReqCreateTodo',
 					name: newItemBox.value,
+					reqCreateTodoSessionId: sessionId,
 				})
 			)
 			newItemBox.value = ''

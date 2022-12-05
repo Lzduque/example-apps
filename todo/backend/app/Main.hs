@@ -162,7 +162,14 @@ handleClientMessage msg (wsId, conn) state = do
             Just session -> do
               sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, sessionId = RSession.id session }
     | Maybe.isJust reqTodoList -> do
-      sendTodoList (wsId, conn) state
+      -- get user to be able to query only user's todos
+      let sessionId = Msg.reqTodoListSessionId (Maybe.fromJust reqTodoList)
+      mUserId <- Db.findUserIdBySessionId sessionId
+      case mUserId of
+        Nothing -> do
+          print "Invalid session"
+        Just userId -> do
+          sendTodoList (wsId, conn) state userId
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
       let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
@@ -191,9 +198,9 @@ handleClientMessage msg (wsId, conn) state = do
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
-sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
-sendTodoList (wsId, conn) state = do
-  items <- Db.getTodoList
+sendTodoList :: Client -> Conc.MVar ServerState -> Integer -> IO ()
+sendTodoList (wsId, conn) state userId = do
+  items <- Db.getTodoList userId
   let msg = Msg.ResTodoList { type_ = Proxy.Proxy, items = items }
   sendMessage conn msg
 
