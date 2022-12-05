@@ -227,3 +227,12 @@ findUserIdBySessionId sessionId = do
   case rows of
     [] -> return Nothing
     (x:_) -> return (Just (SQL.fromOnly x)) 
+
+deleteSession :: T.Text -> IO ()
+deleteSession sessionId = do
+  conn <- connect
+  handleQuery 
+    (SQL.execute conn "DELETE FROM Session WHERE id = ?" [sessionId :: T.Text])
+    ()
+  SQL.close conn
+

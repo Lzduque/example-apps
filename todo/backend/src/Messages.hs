@@ -31,7 +31,7 @@ data ResConnection = ResConnection
 
 data ReqTodoList = ReqTodoList
   { type_ :: Proxy.Proxy "ReqTodoList"
-  , reqTodoListSessionId :: T.Text
+  , reqTodoListSessionId :: Maybe T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -100,5 +100,16 @@ data ReqSignIn = ReqSignIn
 data ResSignIn = ResSignIn
   { type_ :: Proxy.Proxy "ResSignIn"
   , sessionId :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ReqSignOut = ReqSignOut
+  { type_ :: Proxy.Proxy "ReqSignOut"
+  , reqSignOutSessionId :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ResSignOut = ResSignOut
+  { type_ :: Proxy.Proxy "ResSignOut"
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

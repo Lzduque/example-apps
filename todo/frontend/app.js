@@ -1,14 +1,4 @@
-// type message = {
-// 	type:: string,
-// 	...
-// }
-
-//  type messageConnection = {
-//		type_ = 'in-connection', :: string
-// 		userId :: string
-// }
 const socket = new WebSocket('ws://127.0.0.1:9160')
-let sessionId
 
 socket.onopen = (event) => {
 	socket.send(
@@ -28,28 +18,32 @@ socket.onmessage = (event) => {
 		case 'ResConnection':
 			// TODO: sign in if we have a session
 			console.log(`[message] Connection with server established!`)
-			// socket.send(
-			// 	JSON.stringify({
-			// 		type_: 'ReqTodoList',
-			// 	})
-			// )
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+					reqTodoListSessionId: localStorage.getItem('sessionId'),
+				})
+			)
 			break
 		case 'ResRegister':
 			// TODO: session handling
 			// TODO: user should also be signed in, so update the view
 			break
 		case 'ResSignIn':
-			// TODO: session handling
-			showListView()
-			sessionId = message.sessionId
+			localStorage.setItem('sessionId', message.sessionId)
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
-					reqTodoListSessionId: sessionId,
+					reqTodoListSessionId: message.sessionId,
 				})
 			)
 			break
+		case 'ResSignOut':
+			localStorage.removeItem('sessionId')
+			showSignInView()
+			break
 		case 'ResTodoList':
+			showListView()
 			listView.innerHTML = ''
 			message.items.forEach(({id, name, checked}) => {
 				console.log(`[message] ResTodoList`)
@@ -75,7 +69,8 @@ socket.onmessage = (event) => {
 								type_: 'ReqToggleTodo',
 								reqToggleTodoId: id,
 								checked: itemCheckbox.checked,
-								reqToggleTodoSessionId: sessionId,
+								reqToggleTodoSessionId:
+									localStorage.getItem('sessionId'),
 							})
 						)
 					} catch (e) {
@@ -103,7 +98,8 @@ socket.onmessage = (event) => {
 							JSON.stringify({
 								type_: 'ReqDeleteTodo',
 								reqDeleteTodoId: id,
-								reqDeleteTodoSessionId: sessionId,
+								reqDeleteTodoSessionId:
+									localStorage.getItem('sessionId'),
 							})
 						)
 					} catch (e) {
@@ -117,7 +113,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
-					reqTodoListSessionId: sessionId,
+					reqTodoListSessionId: localStorage.getItem('sessionId'),
 				})
 			)
 			break
@@ -125,7 +121,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
-					reqTodoListSessionId: sessionId,
+					reqTodoListSessionId: localStorage.getItem('sessionId'),
 				})
 			)
 			break
@@ -133,7 +129,7 @@ socket.onmessage = (event) => {
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
-					reqTodoListSessionId: sessionId,
+					reqTodoListSessionId: localStorage.getItem('sessionId'),
 				})
 			)
 			break
@@ -158,9 +154,6 @@ socket.onclose = (event) => {
 socket.onerror = (error) => {
 	console.log(`[error]: ${error}`)
 }
-
-// Mock for view
-let signedIn = false
 
 const showSignInView = () => {
 	const app = document.getElementById('app')
@@ -353,7 +346,7 @@ const showListView = () => {
 				JSON.stringify({
 					type_: 'ReqCreateTodo',
 					name: newItemBox.value,
-					reqCreateTodoSessionId: sessionId,
+					reqCreateTodoSessionId: localStorage.getItem('sessionId'),
 				})
 			)
 			newItemBox.value = ''
@@ -385,5 +378,11 @@ const showListView = () => {
 }
 
 window.onload = (event) => {
-	showSignInView()
+	// const sessionId = localStorage.getItem('sessionId')
+	// socket.send(
+	// 	JSON.stringify({
+	// 		type_: 'ReqResumeSession',
+	// 		reqResumeSessionSessionId: sessionId,
+	// 	})
+	// )
 }

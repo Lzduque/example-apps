@@ -119,6 +119,7 @@ handleClientMessage msg (wsId, conn) state = do
 
   let reqRegister :: Maybe Msg.ReqRegister = Aeson.decode . cs $ msg
   let reqSignIn :: Maybe Msg.ReqSignIn = Aeson.decode . cs $ msg
+  let reqSignOut :: Maybe Msg.ReqSignOut = Aeson.decode . cs $ msg
   let reqTodoList :: Maybe Msg.ReqTodoList = Aeson.decode . cs $ msg
   let reqCreateTodo :: Maybe Msg.ReqCreateTodo = Aeson.decode . cs $ msg
   let reqDeleteTodo :: Maybe Msg.ReqDeleteTodo = Aeson.decode . cs $ msg
@@ -159,15 +160,25 @@ handleClientMessage msg (wsId, conn) state = do
               print "Auth failed, couldn't create session" -- TEMP
             Just session -> do
               sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, sessionId = RSession.id session }
+    | Maybe.isJust reqSignOut -> do
+      let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
+      -- find session with Id and delete it, then respond back
+      Db.deleteSession sessionId
+      sendMessage conn Msg.ResSignOut { type_ = Proxy.Proxy }
     | Maybe.isJust reqTodoList -> do
       -- get user to be able to query only user's todos
-      let sessionId = Msg.reqTodoListSessionId (Maybe.fromJust reqTodoList)
-      mUserId <- Db.findUserIdBySessionId sessionId
-      case mUserId of
+      let mSessionId = Msg.reqTodoListSessionId (Maybe.fromJust reqTodoList)
+      case mSessionId of
         Nothing -> do
           print "Invalid session"
-        Just userId -> do
-          sendTodoList (wsId, conn) state userId
+          sendMessage conn Msg.ResSignOut { type_ = Proxy.Proxy }
+        Just sessionId -> do
+          mUserId <- Db.findUserIdBySessionId sessionId
+          case mUserId of
+            Nothing -> do
+              print "Invalid session"
+            Just userId -> do
+              sendTodoList (wsId, conn) state userId
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
       let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
