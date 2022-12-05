@@ -127,7 +127,6 @@ findUserByEmail :: T.Text -> IO (Maybe RUser.RUser)
 findUserByEmail email = do
   conn <- connect
   rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
-  print $ "email: " ++ (show email) -- TEMP
   SQL.close conn
   case rows of
     [] -> return Nothing
@@ -169,7 +168,6 @@ authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
 authenticateUser email password = do
   conn <- connect
   rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
-  print $ "rows: " ++ (show rows) -- TEMP
   SQL.close conn
   case rows of
     [] -> do
@@ -190,7 +188,6 @@ authenticateUser email password = do
 
 createSession :: RUser.RUser -> IO (Maybe RSession.RSession)
 createSession user = do
-  print $ "user: " ++ (show user)
   conn <- connect
   let userId :: Integer = RUser.id user
   sId <- UUID.nextRandom
@@ -214,7 +211,6 @@ findSessionById :: T.Text -> IO (Maybe RSession.RSession)
 findSessionById sessionId = do
   conn <- connect
   rows :: [DbSession.Session] <- handleQuery (SQL.query conn "SELECT * FROM Session WHERE id = ?" [sessionId :: T.Text]) []
-  print $ "sessionId: " ++ (show sessionId) -- TEMP
   SQL.close conn
   case rows of
     [] -> return Nothing
@@ -227,8 +223,6 @@ findUserIdBySessionId :: T.Text -> IO (Maybe Integer)
 findUserIdBySessionId sessionId = do
   conn <- connect
   rows :: [SQL.Only Integer] <- handleQuery (SQL.query conn "SELECT DISTINCT userId FROM Session WHERE id = ?" [sessionId :: T.Text]) []
-  print $ "sessionId: " ++ (show sessionId) -- TEMP
-  print $ "rows: " ++ (show rows) -- TEMP
   SQL.close conn
   case rows of
     [] -> return Nothing

@@ -11,7 +11,6 @@ const socket = new WebSocket('ws://127.0.0.1:9160')
 let sessionId
 
 socket.onopen = (event) => {
-	console.log('onopen')
 	socket.send(
 		JSON.stringify({
 			type_: 'ReqConnection',
@@ -220,9 +219,6 @@ const showSignInView = () => {
 		'Submit'
 	)
 	const sendRegister = (event) => {
-		console.log('event: ', event)
-		console.log('emailField1.value: ', emailField1.value)
-		console.log('passwordField1.value: ', passwordField1.value)
 		try {
 			socket.send(
 				JSON.stringify({
@@ -299,9 +295,6 @@ const showSignInView = () => {
 		'Submit'
 	)
 	const sendSignIn = (event) => {
-		console.log('event: ', event)
-		console.log('emailField2.value: ', emailField2.value)
-		console.log('passwordField2.value: ', passwordField2.value)
 		try {
 			socket.send(
 				JSON.stringify({
