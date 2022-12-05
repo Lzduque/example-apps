@@ -11,5 +11,6 @@ data TodoListItem = TodoListItem
   , checked :: Integer
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
+  , userId :: Integer -- foreign key
   }
   deriving (Generics.Generic, Show, SQL.FromRow, SQL.ToRow)

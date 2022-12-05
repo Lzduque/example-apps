@@ -7,7 +7,7 @@ import qualified Data.Time.Clock as Time
 
 data Session = Session
   { id :: T.Text
-  , userId :: Integer
+  , userId :: Integer -- foreign key
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
   }

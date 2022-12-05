@@ -39,7 +39,7 @@ build = do
   conn <- connect
   let db = SQL.connectionHandle conn
   schemaSQL <- T.readFile schemaFile
-  SQLite.exec db schemaSQL
+  handleQuery (SQLite.exec db schemaSQL) ()
   putStrLn $ "Schema assembled"
   SQL.close conn
 
@@ -48,7 +48,7 @@ populate = do
   conn <- connect
   let db = SQL.connectionHandle conn
   seedsSQL <- T.readFile seedsFile
-  SQLite.exec db seedsSQL
+  handleQuery (SQLite.exec db seedsSQL) ()
   putStrLn $ "DB populated"
   SQL.close conn
 
@@ -187,13 +187,15 @@ authenticateUser email password = do
 
 createSession :: RUser.RUser -> IO (Maybe RSession.RSession)
 createSession user = do
+  print $ "user: " ++ (show user)
   conn <- connect
-  let userId = RUser.id user
-  sessionId <- UUID.nextRandom
+  let userId :: Integer = RUser.id user
+  sId <- UUID.nextRandom
+  let sessionId :: T.Text = UUID.toText sId :: T.Text
   rows :: [DbSession.Session] <- handleQuery 
     (SQL.query conn "INSERT INTO Session (id, userId) VALUES (?, ?) RETURNING *"
-      ( UUID.toText sessionId
-      , userId
+      ( sessionId :: T.Text
+      , userId :: Integer
       )
     )
     []

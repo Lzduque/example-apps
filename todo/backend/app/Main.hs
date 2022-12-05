@@ -133,13 +133,13 @@ handleClientMessage msg (wsId, conn) state = do
       case mUser of 
         Just user -> do
           print "Error, user already registered" -- TEMP
-          -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
+          -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, error = RegisterError.EmailExists }
         Nothing -> do
           Db.createUser CUser.CUser
             { email = email
             , password = password
             }
-          -- (also create session)
+          -- (also create and send session, for convenience)
           sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
     | Maybe.isJust reqSignIn -> do
       let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
@@ -155,6 +155,7 @@ handleClientMessage msg (wsId, conn) state = do
         Just user -> do -- auth succeeded
           -- generate session
           mSession <- Db.createSession user
+          print $ "mSession: " ++ (show mSession)
           case mSession of
             Nothing -> do
               print "Auth failed, couldn't create session" -- TEMP
