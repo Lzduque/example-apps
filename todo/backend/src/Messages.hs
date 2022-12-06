@@ -41,6 +41,12 @@ data ResTodoList = ResTodoList
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
+data UpdateTodoList = UpdateTodoList
+  { type_ :: Proxy.Proxy "ResTodoList"
+  , items :: [RTodoListItem.RTodoListItem]
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
 data ReqCreateTodo = ReqCreateTodo
   { type_ :: Proxy.Proxy "ReqCreateTodo"
   , name :: T.Text
