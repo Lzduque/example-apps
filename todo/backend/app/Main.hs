@@ -136,12 +136,21 @@ handleClientMessage msg (wsId, conn) state = do
           print "Error, user already registered" -- TEMP
           -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, error = RegisterError.EmailExists }
         Nothing -> do
-          Db.createUser CUser.CUser
+          mUser <- Db.createUser CUser.CUser
             { email = email
             , password = password
             }
-          -- (also create and send session, for convenience)
-          sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy }
+          case mUser of
+            Nothing -> do
+              print "Auth failed, couldn't create user" -- TEMP
+            Just user -> do
+              -- (also create and send session, for convenience)
+              mSession <- Db.createSession user
+              case mSession of
+                Nothing -> do
+                  print "Auth failed, couldn't create session" -- TEMP
+                Just session -> do
+                  sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
     | Maybe.isJust reqSignIn -> do
       let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
       let password = Msg.reqSignInPassword (Maybe.fromJust reqSignIn)
@@ -159,7 +168,7 @@ handleClientMessage msg (wsId, conn) state = do
             Nothing -> do
               print "Auth failed, couldn't create session" -- TEMP
             Just session -> do
-              sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, sessionId = RSession.id session }
+              sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, resSignInSessionId = RSession.id session }
     | Maybe.isJust reqSignOut -> do
       let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
       Db.deleteSession sessionId

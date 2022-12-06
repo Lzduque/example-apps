@@ -87,6 +87,7 @@ data ReqRegister = ReqRegister
 
 data ResRegister = ResRegister
   { type_ :: Proxy.Proxy "ResRegister"
+    , resRegisterSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
@@ -99,7 +100,7 @@ data ReqSignIn = ReqSignIn
 
 data ResSignIn = ResSignIn
   { type_ :: Proxy.Proxy "ResSignIn"
-  , sessionId :: T.Text
+  , resSignInSessionId :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 

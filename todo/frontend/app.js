@@ -16,7 +16,6 @@ socket.onmessage = (event) => {
 	console.log(message)
 	switch (message.type_) {
 		case 'ResConnection':
-			// TODO: sign in if we have a session
 			console.log(`[message] Connection with server established!`)
 			socket.send(
 				JSON.stringify({
@@ -26,15 +25,20 @@ socket.onmessage = (event) => {
 			)
 			break
 		case 'ResRegister':
-			// TODO: session handling
-			// TODO: user should also be signed in, so update the view
-			break
-		case 'ResSignIn':
-			localStorage.setItem('sessionId', message.sessionId)
+			localStorage.setItem('sessionId', message.resRegisterSessionId)
 			socket.send(
 				JSON.stringify({
 					type_: 'ReqTodoList',
-					reqTodoListSessionId: message.sessionId,
+					reqTodoListSessionId: message.resRegisterSessionId,
+				})
+			)
+			break
+		case 'ResSignIn':
+			localStorage.setItem('sessionId', message.resSignInSessionId)
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqTodoList',
+					reqTodoListSessionId: message.resSignInSessionId,
 				})
 			)
 			break
