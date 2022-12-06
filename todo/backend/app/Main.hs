@@ -161,6 +161,7 @@ handleClientMessage msg (wsId, conn) state = do
         Nothing -> do
           print "Auth failed, no user found" -- TEMP
           -- TODO: send error message
+          -- sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, error = SignInError.Generic }
         Just user -> do -- auth succeeded
           -- generate session
           mSession <- Db.createSession user

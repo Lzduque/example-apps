@@ -379,6 +379,11 @@ const showListView = () => {
 		}
 	}
 
+	newItemBox.addEventListener(
+		'keydown',
+		(event) => event.key === 'Enter' && createTodo()
+	)
+
 	const addNewItemButton = addElement(
 		newItemContainer,
 		'button',
