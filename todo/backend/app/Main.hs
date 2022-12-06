@@ -162,7 +162,6 @@ handleClientMessage msg (wsId, conn) state = do
               sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, sessionId = RSession.id session }
     | Maybe.isJust reqSignOut -> do
       let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
-      -- find session with Id and delete it, then respond back
       Db.deleteSession sessionId
       sendMessage conn Msg.ResSignOut { type_ = Proxy.Proxy }
     | Maybe.isJust reqTodoList -> do
@@ -177,6 +176,8 @@ handleClientMessage msg (wsId, conn) state = do
           case mUserId of
             Nothing -> do
               print "Invalid session"
+              Db.deleteSession sessionId
+              sendMessage conn Msg.ResSignOut { type_ = Proxy.Proxy }
             Just userId -> do
               sendTodoList (wsId, conn) state userId
     | Maybe.isJust reqCreateTodo -> do

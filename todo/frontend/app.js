@@ -44,7 +44,7 @@ socket.onmessage = (event) => {
 			break
 		case 'ResTodoList':
 			showListView()
-			listView.innerHTML = ''
+			// listView.innerHTML = ''
 			message.items.forEach(({id, name, checked}) => {
 				console.log(`[message] ResTodoList`)
 
@@ -322,7 +322,27 @@ const showListView = () => {
 
 	const title = addElement(topBar, 'h2', 'title', [], 'Todos')
 
-	const signOut = addElement(topBar, 'button', 'signOut', [], 'Sign Out')
+	const signOut = () => {
+		try {
+			socket.send(
+				JSON.stringify({
+					type_: 'ReqSignOut',
+					reqSignOutSessionId: localStorage.getItem('sessionId'),
+				})
+			)
+		} catch (e) {
+			console.log('ERROR ReqSignOut: ', e)
+		}
+	}
+
+	const signOutButton = addElement(
+		topBar,
+		'button',
+		'signOut',
+		[],
+		'Sign Out'
+	)
+	signOutButton.addEventListener('click', signOut)
 
 	// Horizontal line
 	const horizontalLine = addElement(app, 'div', 'horizontalLine')
