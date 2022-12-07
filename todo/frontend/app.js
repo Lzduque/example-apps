@@ -46,72 +46,14 @@ socket.onmessage = (event) => {
 			localStorage.removeItem('sessionId')
 			showSignInView()
 			break
+		case 'UpdateTodoList':
+			console.log(`[message] UpdateTodoList`)
+			updateTodoList(message.items)
+			break
 		case 'ResTodoList':
+			console.log(`[message] ResTodoList`)
 			showListView()
-			// listView.innerHTML = ''
-			message.items.forEach(({id, name, checked}) => {
-				console.log(`[message] ResTodoList`)
-
-				const itemContainer = addElement(listView, 'div', id)
-				const itemLeftContainer = addElement(
-					itemContainer,
-					'div',
-					`${id}LeftContainer`
-				)
-				const checkedAttr = checked ? ['checked', ''] : null
-				const itemCheckboxAttrs = [['type', 'checkbox'], checkedAttr]
-				const itemCheckbox = addElement(
-					itemLeftContainer,
-					'input',
-					`${id}Checkbox`,
-					itemCheckboxAttrs.filter(isTruthy)
-				)
-				const toggleTodo = (id) => (event) => {
-					try {
-						socket.send(
-							JSON.stringify({
-								type_: 'ReqToggleTodo',
-								reqToggleTodoId: id,
-								checked: itemCheckbox.checked,
-								reqToggleTodoSessionId:
-									localStorage.getItem('sessionId'),
-							})
-						)
-					} catch (e) {
-						console.log('ERROR ReqToggleTodo: ', e)
-					}
-				}
-				itemCheckbox.addEventListener('change', toggleTodo(id))
-				const text = addElement(
-					itemLeftContainer,
-					'label',
-					`${id}Text`,
-					[],
-					name
-				)
-				const deleteButton = addElement(
-					itemContainer,
-					'button',
-					`${id}DeleteButton`,
-					[],
-					'Delete'
-				)
-				const deleteTodo = (id) => (event) => {
-					try {
-						socket.send(
-							JSON.stringify({
-								type_: 'ReqDeleteTodo',
-								reqDeleteTodoId: id,
-								reqDeleteTodoSessionId:
-									localStorage.getItem('sessionId'),
-							})
-						)
-					} catch (e) {
-						console.log('ERROR ReqDeleteTodo: ', e)
-					}
-				}
-				deleteButton.addEventListener('click', deleteTodo(id))
-			})
+			updateTodoList(message.items)
 			break
 		case 'ResCreateTodo':
 			socket.send(
@@ -404,6 +346,72 @@ const showListView = () => {
 		[],
 		'My Tasks'
 	)
+}
+
+const updateTodoList = (items) => {
+	if (!listView) return
+	listView.innerHTML = ''
+	items.forEach(({id, name, checked}) => {
+		const itemContainer = addElement(listView, 'div', id)
+		const itemLeftContainer = addElement(
+			itemContainer,
+			'div',
+			`${id}LeftContainer`
+		)
+		const checkedAttr = checked ? ['checked', ''] : null
+		const itemCheckboxAttrs = [['type', 'checkbox'], checkedAttr]
+		const itemCheckbox = addElement(
+			itemLeftContainer,
+			'input',
+			`${id}Checkbox`,
+			itemCheckboxAttrs.filter(isTruthy)
+		)
+		const toggleTodo = (id) => (event) => {
+			try {
+				socket.send(
+					JSON.stringify({
+						type_: 'ReqToggleTodo',
+						reqToggleTodoId: id,
+						checked: itemCheckbox.checked,
+						reqToggleTodoSessionId:
+							localStorage.getItem('sessionId'),
+					})
+				)
+			} catch (e) {
+				console.log('ERROR ReqToggleTodo: ', e)
+			}
+		}
+		itemCheckbox.addEventListener('change', toggleTodo(id))
+		const text = addElement(
+			itemLeftContainer,
+			'label',
+			`${id}Text`,
+			[],
+			name
+		)
+		const deleteButton = addElement(
+			itemContainer,
+			'button',
+			`${id}DeleteButton`,
+			[],
+			'Delete'
+		)
+		const deleteTodo = (id) => (event) => {
+			try {
+				socket.send(
+					JSON.stringify({
+						type_: 'ReqDeleteTodo',
+						reqDeleteTodoId: id,
+						reqDeleteTodoSessionId:
+							localStorage.getItem('sessionId'),
+					})
+				)
+			} catch (e) {
+				console.log('ERROR ReqDeleteTodo: ', e)
+			}
+		}
+		deleteButton.addEventListener('click', deleteTodo(id))
+	})
 }
 
 window.onload = (event) => {

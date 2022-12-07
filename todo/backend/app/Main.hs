@@ -7,6 +7,7 @@ import qualified Api.Types.RTodoListItem as RTodoListItem
 import qualified Api.Types.CTodoListItem as CTodoListItem
 import qualified Api.Types.UTodoListItem as UTodoListItem
 import qualified Api.Types.CUser as CUser
+import qualified Api.Types.RUser as RUser
 import qualified Api.Types.RSession as RSession
 
 import qualified Network.WebSockets as WS
@@ -23,14 +24,20 @@ import qualified Data.Proxy as Proxy
 import Data.String.Conversions (cs)
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
+import qualified Data.List as L
 
 type WSId = UUID.UUID
+-- type WSClientId = UUID.UUID
 type UserId = Maybe Integer
+-- data WSClient = WSClient
+--   { wsClientId :: WSClientId
 data Client = Client
   { wsId :: WSId
   , userId :: UserId
   , conn :: WS.Connection
   }
+instance Show Client where
+  show client = "wsId: " ++ show (wsId client) ++ ", userId: " ++ show (userId client)
 type ServerState = [Client]
 
 newServerState :: ServerState
@@ -47,8 +54,17 @@ addClient client clients
   | not (clientExists client clients) = client : clients
   | otherwise = clients
 
+updateClient :: Client -> ServerState -> ServerState
+updateClient client clients = client : filter (\x -> wsId x /= wsId client) clients
+
 removeClient :: Client -> ServerState -> ServerState
 removeClient client = filter ((/= wsId client) . wsId)
+
+modifyState :: Client -> Conc.MVar ServerState -> IO ()
+modifyState client state = do
+  Conc.modifyMVar_ state $ \s -> do
+    let s' = updateClient client s
+    return s'
 
 broadcast :: T.Text -> ServerState -> IO ()
 broadcast message clients = do
@@ -97,6 +113,8 @@ handleNewConnection client state = do
       T.putStrLn $ "User already exists: " <> UUID.toText (wsId client)
     | otherwise -> do
       flip Except.finally (disconnect client state) $ do
+        T.putStrLn $ "[handleNewConnection] From client: " <> UUID.toText (wsId client)
+        T.putStrLn $ "[handleNewConnection] From client: " <> cs (show (userId client))
         Conc.modifyMVar_ state $ \s -> do
           let s' = addClient client s
           -- broadcast (fst client <> " joined") s'
@@ -116,14 +134,26 @@ disconnect client state = do
 -- This is to continuously listen for messages from a specific client
 connect :: Client -> Conc.MVar ServerState -> IO ()
 connect client state = M.forever $ do
-  msg <- WS.receiveData (conn client)
-  handleClientMessage msg client state
+  T.putStrLn $ "[connect] From client: " <> UUID.toText (wsId client)
+  T.putStrLn $ "[connect] From client: " <> cs (show (userId client))
+  clients <- Conc.readMVar state
+  T.putStrLn $ "[connect] clients: " <> cs (show clients)
+  -- Get the client from the state (match by wsId) so we always have its latest version, with any modifications applied to state
+  let mClient :: Maybe Client = L.find (\x -> wsId x == wsId client) clients
+  case mClient of
+    Nothing -> return ()
+    Just client' -> do
+      T.putStrLn $ "[connect] From client: " <> UUID.toText (wsId client')
+      T.putStrLn $ "[connect] From client: " <> cs (show (userId client'))
+      msg <- WS.receiveData (conn client')
+      handleClientMessage msg client' state
 
 handleClientMessage :: T.Text -> Client -> Conc.MVar ServerState -> IO ()
 handleClientMessage msg client state = do
   -- DEBUGGING
-  T.putStrLn $ "New msg: " <> msg
-  T.putStrLn $ "From client: " <> UUID.toText (wsId client)
+  T.putStrLn $ "[handleClientMessage] New msg: " <> msg
+  T.putStrLn $ "[handleClientMessage] From client: " <> UUID.toText (wsId client)
+  T.putStrLn $ "[handleClientMessage] From client: " <> cs (show (userId client))
 
   let reqRegister :: Maybe Msg.ReqRegister = Aeson.decode . cs $ msg
   let reqSignIn :: Maybe Msg.ReqSignIn = Aeson.decode . cs $ msg
@@ -158,6 +188,8 @@ handleClientMessage msg client state = do
                 Nothing -> do
                   print "Auth failed, couldn't create session" -- TEMP
                 Just session -> do
+                  -- update the client in state to have the user ID
+                  modifyState (client { userId = Just (RUser.id user) }) state
                   sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
     | Maybe.isJust reqSignIn -> do
       let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
@@ -178,6 +210,8 @@ handleClientMessage msg client state = do
             Nothing -> do
               print "Auth failed, couldn't create session" -- TEMP
             Just session -> do
+              -- update the client in state to have the user ID
+              modifyState (client { userId = Just (RUser.id user) }) state
               sendMessage (conn client) Msg.ResSignIn { type_ = Proxy.Proxy, resSignInSessionId = RSession.id session }
     | Maybe.isJust reqSignOut -> do
       let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
@@ -198,7 +232,9 @@ handleClientMessage msg client state = do
               Db.deleteSession sessionId
               sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
             Just userId -> do
-              sendTodoList client state userId
+              let newClient = client { userId = Just userId }
+              modifyState newClient state
+              sendTodoList newClient state
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
       let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
@@ -227,29 +263,30 @@ handleClientMessage msg client state = do
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
-sendTodoList :: Client -> Conc.MVar ServerState -> Integer -> IO ()
-sendTodoList client state userId = do
-  items <- Db.getTodoList userId
+sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
+sendTodoList client state = do
+  items <- case userId client of
+    Nothing -> return []
+    Just userId' -> Db.getTodoList userId'
 
   let msg = Msg.ResTodoList { type_ = Proxy.Proxy, items = items }
   sendMessage (conn client) msg
 
-  -- let updateMsg = Msg.UpdateTodoList { type_ = Proxy.Proxy, items = items }
-  -- broadcastUserMessage state userId updateMsg
+  let updateMsg = Msg.UpdateTodoList { type_ = Proxy.Proxy, items = items }
+  broadcastUserMessage state client updateMsg
 
--- send message to every session of the same user
 -- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string
 sendMessage :: Aeson.ToJSON a => WS.Connection -> a -> IO ()
 sendMessage conn msg = do
   WS.sendTextData conn (cs . Aeson.encode $ msg :: T.Text)
 
--- broadcastUserMessage :: Aeson.ToJSON a => Conc.MVar ServerState -> Integer -> a -> IO ()
--- broadcastUserMessage state userId msg = do
---   clients <- Conc.readMVar state
---   -- clients have wsId, but we need userId or sessionId
---   let clients' = filter _ clients
---   M.forM_ clients' $ do
---     \(_, conn) -> WS.sendTextData conn (cs . Aeson.encode $ msg :: T.Text)
+-- Send message to every other session that the client is logged in as (NOT including the client's current session)
+broadcastUserMessage :: Aeson.ToJSON a => Conc.MVar ServerState -> Client -> a -> IO ()
+broadcastUserMessage state client msg = do
+  clients <- Conc.readMVar state
+  let clients' = filter (\client' -> userId client' == userId client && not (wsId client' == wsId client)) clients
+  M.forM_ clients' $ do
+    \client' -> WS.sendTextData (conn client') (cs . Aeson.encode $ msg :: T.Text)
 
 main :: IO ()
 main = do
