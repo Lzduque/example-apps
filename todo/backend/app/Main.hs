@@ -145,7 +145,6 @@ handleWSClientMessage :: T.Text -> WSClientId -> Conc.MVar ServerState -> IO ()
 handleWSClientMessage msg clientId state = do
   clients <- Conc.readMVar state
   let mClient = getWSClient clientId clients
-
   M.when (Maybe.isNothing mClient) $ do
     T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
   M.guard (Maybe.isJust mClient)
@@ -166,49 +165,49 @@ handleWSClientMessage msg clientId state = do
 
   if
     | Maybe.isJust reqRegister -> do
-      let email = T.toLower (Msg.reqRegisterEmail (Maybe.fromJust reqRegister))
-      let password = Msg.reqRegisterPassword (Maybe.fromJust reqRegister)
-      -- validate that user does not exist
-      mUser <- Db.findUserByEmail email
-      case mUser of 
-        Just user -> do
-          print "Error, user already registered" -- TEMP
-          -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, error = RegisterError.EmailExists }
-        Nothing -> do
-          mUser <- Db.createUser CUser.CUser
-            { email = email
-            , password = password
-            }
-          case mUser of
-            Nothing -> do
-              print "Auth failed, couldn't create user" -- TEMP
-            Just user -> do
-              -- (also create and send session, for convenience)
-              mSession <- Db.createSession user
-              case mSession of
-                Nothing -> do
-                  print "Auth failed, couldn't create session" -- TEMP
-                Just session -> do
-                  -- update the client in state to have the user ID
-                  let newClient = client { userId = Just (RUser.id user) }
-                  Conc.modifyMVar_ state $ \s -> do
-                    let s' = updateWSClient newClient s
-                    return s'
-                  sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
+      handleReqRegister (Maybe.fromJust reqRegister) clientId state
     | Maybe.isJust reqSignIn -> do
-      let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
-      let password = Msg.reqSignInPassword (Maybe.fromJust reqSignIn)
-      -- validate auth
-      -- should this be a new type? AuthUser { email, password }
-      mUser <- Db.authenticateUser email password
+      handleReqSignIn (Maybe.fromJust reqSignIn) clientId state
+    | Maybe.isJust reqSignOut -> do
+      handleReqSignOut (Maybe.fromJust reqSignOut) clientId state
+    | Maybe.isJust reqTodoList -> do
+      handleReqTodoList (Maybe.fromJust reqTodoList) clientId state
+    | Maybe.isJust reqCreateTodo -> do
+      handleReqCreateTodo (Maybe.fromJust reqCreateTodo) clientId state
+    | Maybe.isJust reqDeleteTodo -> do
+      handleReqDeleteTodo (Maybe.fromJust reqDeleteTodo) clientId state
+    | Maybe.isJust reqToggleTodo -> do
+      handleReqToggleTodo (Maybe.fromJust reqToggleTodo) clientId state
+    | otherwise -> do
+      T.putStrLn $ "Message not recognized (user): " <> msg
+
+handleReqRegister :: Msg.ReqRegister -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqRegister reqRegister clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+
+  let email = T.toLower (Msg.reqRegisterEmail reqRegister)
+  let password = Msg.reqRegisterPassword reqRegister
+  -- validate that user does not exist
+  mUser <- Db.findUserByEmail email
+  case mUser of 
+    Just user -> do
+      print "Error, user already registered" -- TEMP
+      -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, error = RegisterError.EmailExists }
+    Nothing -> do
+      mUser <- Db.createUser CUser.CUser
+        { email = email
+        , password = password
+        }
       case mUser of
         Nothing -> do
-          print "Auth failed, no user found" -- TEMP
-          -- TODO: send error message
-          -- sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, error = SignInError.Generic }
-          -- sendMessage conn Msg.ResError { type_ = Proxy.Proxy, error = SignInError.Generic }
-        Just user -> do -- auth succeeded
-          -- generate session
+          print "Auth failed, couldn't create user" -- TEMP
+        Just user -> do
+          -- (also create and send session, for convenience)
           mSession <- Db.createSession user
           case mSession of
             Nothing -> do
@@ -219,58 +218,129 @@ handleWSClientMessage msg clientId state = do
               Conc.modifyMVar_ state $ \s -> do
                 let s' = updateWSClient newClient s
                 return s'
-              sendMessage (conn client) Msg.ResSignIn { type_ = Proxy.Proxy, resSignInSessionId = RSession.id session }
-    | Maybe.isJust reqSignOut -> do
-      let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
-      Db.deleteSession sessionId
-      sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
-    | Maybe.isJust reqTodoList -> do
-      -- get user to be able to query only user's todos
-      let mSessionId = Msg.reqTodoListSessionId (Maybe.fromJust reqTodoList)
-      case mSessionId of
-        Nothing -> do
-          print "Invalid session"
-          sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
-        Just sessionId -> do
-          mUserId <- Db.findUserIdBySessionId sessionId
-          case mUserId of
-            Nothing -> do
-              print "Invalid session"
-              Db.deleteSession sessionId
-              sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
-            Just userId -> do
-              let newWSClient = client { userId = Just userId }
-              Conc.modifyMVar_ state $ \s -> do
-                let s' = updateWSClient newWSClient s
-                return s'
-              sendTodoList (wsClientId newWSClient) state
-    | Maybe.isJust reqCreateTodo -> do
-      let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
-      let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
-      mSession <- Db.findSessionById sessionId
+              sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
+
+handleReqSignIn :: Msg.ReqSignIn -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqSignIn reqSignIn clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  let email = T.toLower (Msg.reqSignInEmail reqSignIn)
+  let password = Msg.reqSignInPassword reqSignIn
+  -- validate auth
+  -- should this be a new type? AuthUser { email, password }
+  mUser <- Db.authenticateUser email password
+  case mUser of
+    Nothing -> do
+      print "Auth failed, no user found" -- TEMP
+      -- TODO: send error message
+      -- sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, error = SignInError.Generic }
+      -- sendMessage conn Msg.ResError { type_ = Proxy.Proxy, error = SignInError.Generic }
+    Just user -> do -- auth succeeded
+      -- generate session
+      mSession <- Db.createSession user
       case mSession of
         Nothing -> do
-          print "Auth failed, couldn't retrieve session" -- TEMP
-          -- TODO: send error message
+          print "Auth failed, couldn't create session" -- TEMP
         Just session -> do
-          let userId = RSession.userId session
-          Db.createTodo CTodoListItem.CTodoListItem
-            { name = name
-            , userId = userId
-            }
-          sendMessage (conn client) Msg.ResCreateTodo { type_ = Proxy.Proxy }
-    | Maybe.isJust reqDeleteTodo -> do
-      Db.deleteTodo $ Msg.reqDeleteTodoId (Maybe.fromJust reqDeleteTodo)
-      sendMessage (conn client) Msg.ResDeleteTodo { type_ = Proxy.Proxy }
-    | Maybe.isJust reqToggleTodo -> do
-      let itemId = Msg.reqToggleTodoId (Maybe.fromJust reqToggleTodo)
-      let checked = Msg.checked (Maybe.fromJust reqToggleTodo)
-      Db.updateTodo itemId UTodoListItem.UTodoListItem
-        { checked = checked
+          -- update the client in state to have the user ID
+          let newClient = client { userId = Just (RUser.id user) }
+          Conc.modifyMVar_ state $ \s -> do
+            let s' = updateWSClient newClient s
+            return s'
+          sendMessage (conn client) Msg.ResSignIn { type_ = Proxy.Proxy, resSignInSessionId = RSession.id session }
+
+handleReqSignOut :: Msg.ReqSignOut -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqSignOut reqSignOut clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  let sessionId = Msg.reqSignOutSessionId reqSignOut
+  Db.deleteSession sessionId
+  sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
+
+handleReqTodoList :: Msg.ReqTodoList -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqTodoList reqTodoList clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  -- get user to be able to query only user's todos
+  let mSessionId = Msg.reqTodoListSessionId reqTodoList
+  case mSessionId of
+    Nothing -> do
+      print "Invalid session"
+      sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
+    Just sessionId -> do
+      mUserId <- Db.findUserIdBySessionId sessionId
+      case mUserId of
+        Nothing -> do
+          print "Invalid session"
+          Db.deleteSession sessionId
+          sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
+        Just userId -> do
+          let newWSClient = client { userId = Just userId }
+          Conc.modifyMVar_ state $ \s -> do
+            let s' = updateWSClient newWSClient s
+            return s'
+          sendTodoList (wsClientId newWSClient) state
+
+handleReqCreateTodo :: Msg.ReqCreateTodo -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqCreateTodo reqCreateTodo clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) reqCreateTodo
+  let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) reqCreateTodo
+  mSession <- Db.findSessionById sessionId
+  case mSession of
+    Nothing -> do
+      print "Auth failed, couldn't retrieve session" -- TEMP
+      -- TODO: send error message
+    Just session -> do
+      let userId = RSession.userId session
+      Db.createTodo CTodoListItem.CTodoListItem
+        { name = name
+        , userId = userId
         }
-      sendMessage (conn client) Msg.ResToggleTodo { type_ = Proxy.Proxy }
-    | otherwise -> do
-      T.putStrLn $ "Message not recognized (user): " <> msg
+      sendMessage (conn client) Msg.ResCreateTodo { type_ = Proxy.Proxy }
+
+handleReqDeleteTodo :: Msg.ReqDeleteTodo -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqDeleteTodo reqDeleteTodo clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  Db.deleteTodo $ Msg.reqDeleteTodoId reqDeleteTodo
+  sendMessage (conn client) Msg.ResDeleteTodo { type_ = Proxy.Proxy }
+
+handleReqToggleTodo :: Msg.ReqToggleTodo -> WSClientId -> Conc.MVar ServerState -> IO ()
+handleReqToggleTodo reqToggleTodo clientId state = do
+  clients <- Conc.readMVar state
+  let mClient = getWSClient clientId clients
+  M.when (Maybe.isNothing mClient) $ do
+    T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
+  M.guard (Maybe.isJust mClient)
+  let client = Maybe.fromJust mClient
+  let itemId = Msg.reqToggleTodoId reqToggleTodo
+  let checked = Msg.checked reqToggleTodo
+  Db.updateTodo itemId UTodoListItem.UTodoListItem
+    { checked = checked
+    }
+  sendMessage (conn client) Msg.ResToggleTodo { type_ = Proxy.Proxy }
 
 sendTodoList :: WSClientId -> Conc.MVar ServerState -> IO ()
 sendTodoList clientId state = do
