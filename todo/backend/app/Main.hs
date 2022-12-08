@@ -26,44 +26,44 @@ import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
 import qualified Data.List as L
 
-type WSId = UUID.UUID
--- type WSClientId = UUID.UUID
+-- type WSId = UUID.UUID
+type WSClientId = UUID.UUID
 type UserId = Maybe Integer
--- data WSClient = WSClient
---   { wsClientId :: WSClientId
-data Client = Client
-  { wsId :: WSId
+data WSClient = WSClient
+  { wsClientId :: WSClientId
+-- data Client = Client
+--   { wsId :: WSId
   , userId :: UserId
   , conn :: WS.Connection
   }
-instance Show Client where
-  show client = "wsId: " ++ show (wsId client) ++ ", userId: " ++ show (userId client)
-type ServerState = [Client]
+instance Show WSClient where
+  show client = "wsClientId: " ++ show (wsClientId client) ++ ", userId: " ++ show (userId client)
+type ServerState = [WSClient]
 
 newServerState :: ServerState
 newServerState = []
 
-numClients :: ServerState -> Int
-numClients = length
+numWSClients :: ServerState -> Int
+numWSClients = length
 
-clientExists :: Client -> ServerState -> Bool
-clientExists client serverState = any (\x -> wsId x == wsId client) serverState
+clientExists :: WSClient -> ServerState -> Bool
+clientExists client serverState = any (\x -> wsClientId x == wsClientId client) serverState
 
-addClient :: Client -> ServerState -> ServerState
-addClient client clients
+addWSClient :: WSClient -> ServerState -> ServerState
+addWSClient client clients
   | not (clientExists client clients) = client : clients
   | otherwise = clients
 
-updateClient :: Client -> ServerState -> ServerState
-updateClient client clients = client : filter (\x -> wsId x /= wsId client) clients
+updateWSClient :: WSClient -> ServerState -> ServerState
+updateWSClient client clients = client : filter (\x -> wsClientId x /= wsClientId client) clients
 
-removeClient :: Client -> ServerState -> ServerState
-removeClient client = filter ((/= wsId client) . wsId)
+removeWSClient :: WSClient -> ServerState -> ServerState
+removeWSClient client = filter ((/= wsClientId client) . wsClientId)
 
-modifyState :: Client -> Conc.MVar ServerState -> IO ()
+modifyState :: WSClient -> Conc.MVar ServerState -> IO ()
 modifyState client state = do
   Conc.modifyMVar_ state $ \s -> do
-    let s' = updateClient client s
+    let s' = updateWSClient client s
     return s'
 
 broadcast :: T.Text -> ServerState -> IO ()
@@ -92,9 +92,9 @@ handleConnectionMessage msg conn state = do
   if
     -- Invitation to listen to messages from a specific client
     | Maybe.isJust reqConnectionMessage -> do
-      wsId <- UUID.nextRandom
-      let client = Client 
-            { wsId = wsId
+      wsClientId <- UUID.nextRandom
+      let client = WSClient 
+            { wsClientId = wsClientId
             , userId = Nothing
             , conn = conn
             }
@@ -103,57 +103,57 @@ handleConnectionMessage msg conn state = do
       T.putStrLn $ "Message not recognized (connection): " <> msg
 
 handleNewConnection
-  :: Client
+  :: WSClient
   -> Conc.MVar ServerState 
   -> IO ()
 handleNewConnection client state = do
   clients <- Conc.readMVar state
   if
     | clientExists client clients -> do
-      T.putStrLn $ "User already exists: " <> UUID.toText (wsId client)
+      T.putStrLn $ "User already exists: " <> UUID.toText (wsClientId client)
     | otherwise -> do
       flip Except.finally (disconnect client state) $ do
-        T.putStrLn $ "[handleNewConnection] From client: " <> UUID.toText (wsId client)
+        T.putStrLn $ "[handleNewConnection] From client: " <> UUID.toText (wsClientId client)
         T.putStrLn $ "[handleNewConnection] From client: " <> cs (show (userId client))
         Conc.modifyMVar_ state $ \s -> do
-          let s' = addClient client s
+          let s' = addWSClient client s
           -- broadcast (fst client <> " joined") s'
           return s'
         sendMessage (conn client) Msg.ResConnection { type_ = Proxy.Proxy }
         connect client state
 
-disconnect :: Client -> Conc.MVar ServerState -> IO ()
+disconnect :: WSClient -> Conc.MVar ServerState -> IO ()
 disconnect client state = do
   -- Remove client and return new state
   s <- Conc.modifyMVar state $ \s -> do
-    let s' = removeClient client s
+    let s' = removeWSClient client s
     return (s', s')
   print "SOMEONE DISCONNECTED"
-  broadcast (UUID.toText (wsId client) <> " disconnected") s
+  broadcast (UUID.toText (wsClientId client) <> " disconnected") s
 
 -- This is to continuously listen for messages from a specific client
-connect :: Client -> Conc.MVar ServerState -> IO ()
+connect :: WSClient -> Conc.MVar ServerState -> IO ()
 connect client state = M.forever $ do
-  T.putStrLn $ "[connect] From client: " <> UUID.toText (wsId client)
+  T.putStrLn $ "[connect] From client: " <> UUID.toText (wsClientId client)
   T.putStrLn $ "[connect] From client: " <> cs (show (userId client))
   clients <- Conc.readMVar state
   T.putStrLn $ "[connect] clients: " <> cs (show clients)
-  -- Get the client from the state (match by wsId) so we always have its latest version, with any modifications applied to state
-  let mClient :: Maybe Client = L.find (\x -> wsId x == wsId client) clients
-  case mClient of
+  -- Get the client from the state (match by wsClientId) so we always have its latest version, with any modifications applied to state
+  let mWSClient :: Maybe WSClient = L.find (\x -> wsClientId x == wsClientId client) clients
+  case mWSClient of
     Nothing -> return ()
     Just client' -> do
-      T.putStrLn $ "[connect] From client: " <> UUID.toText (wsId client')
+      T.putStrLn $ "[connect] From client: " <> UUID.toText (wsClientId client')
       T.putStrLn $ "[connect] From client: " <> cs (show (userId client'))
       msg <- WS.receiveData (conn client')
-      handleClientMessage msg client' state
+      handleWSClientMessage msg client' state
 
-handleClientMessage :: T.Text -> Client -> Conc.MVar ServerState -> IO ()
-handleClientMessage msg client state = do
+handleWSClientMessage :: T.Text -> WSClient -> Conc.MVar ServerState -> IO ()
+handleWSClientMessage msg client state = do
   -- DEBUGGING
-  T.putStrLn $ "[handleClientMessage] New msg: " <> msg
-  T.putStrLn $ "[handleClientMessage] From client: " <> UUID.toText (wsId client)
-  T.putStrLn $ "[handleClientMessage] From client: " <> cs (show (userId client))
+  T.putStrLn $ "[handleWSClientMessage] New msg: " <> msg
+  T.putStrLn $ "[handleWSClientMessage] From client: " <> UUID.toText (wsClientId client)
+  T.putStrLn $ "[handleWSClientMessage] From client: " <> cs (show (userId client))
 
   let reqRegister :: Maybe Msg.ReqRegister = Aeson.decode . cs $ msg
   let reqSignIn :: Maybe Msg.ReqSignIn = Aeson.decode . cs $ msg
@@ -232,9 +232,9 @@ handleClientMessage msg client state = do
               Db.deleteSession sessionId
               sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
             Just userId -> do
-              let newClient = client { userId = Just userId }
-              modifyState newClient state
-              sendTodoList newClient state
+              let newWSClient = client { userId = Just userId }
+              modifyState newWSClient state
+              sendTodoList newWSClient state
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
       let sessionId = (Msg.reqCreateTodoSessionId :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
@@ -263,7 +263,7 @@ handleClientMessage msg client state = do
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
-sendTodoList :: Client -> Conc.MVar ServerState -> IO ()
+sendTodoList :: WSClient -> Conc.MVar ServerState -> IO ()
 sendTodoList client state = do
   items <- case userId client of
     Nothing -> return []
@@ -281,10 +281,10 @@ sendMessage conn msg = do
   WS.sendTextData conn (cs . Aeson.encode $ msg :: T.Text)
 
 -- Send message to every other session that the client is logged in as (NOT including the client's current session)
-broadcastUserMessage :: Aeson.ToJSON a => Conc.MVar ServerState -> Client -> a -> IO ()
+broadcastUserMessage :: Aeson.ToJSON a => Conc.MVar ServerState -> WSClient -> a -> IO ()
 broadcastUserMessage state client msg = do
   clients <- Conc.readMVar state
-  let clients' = filter (\client' -> userId client' == userId client && not (wsId client' == wsId client)) clients
+  let clients' = filter (\client' -> userId client' == userId client && not (wsClientId client' == wsClientId client)) clients
   M.forM_ clients' $ do
     \client' -> WS.sendTextData (conn client') (cs . Aeson.encode $ msg :: T.Text)
 
