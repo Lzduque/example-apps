@@ -60,11 +60,19 @@ updateWSClient client clients = client : filter (\x -> wsClientId x /= wsClientI
 removeWSClient :: WSClient -> ServerState -> ServerState
 removeWSClient client = filter ((/= wsClientId client) . wsClientId)
 
-modifyState :: WSClient -> Conc.MVar ServerState -> IO ()
-modifyState client state = do
+getWSClient :: WSClientId -> ServerState -> Maybe WSClient
+getWSClient clientId clients = L.find (\x -> wsClientId x == clientId) clients
+
+updateClientInState :: WSClient -> Conc.MVar ServerState -> IO ()
+updateClientInState client state = do
   Conc.modifyMVar_ state $ \s -> do
     let s' = updateWSClient client s
     return s'
+
+modifyState :: ServerState -> Conc.MVar ServerState -> IO ()
+modifyState clients state = do
+  Conc.modifyMVar_ state $ \_ -> do
+    return clients
 
 broadcast :: T.Text -> ServerState -> IO ()
 broadcast message clients = do
@@ -189,7 +197,7 @@ handleWSClientMessage msg client state = do
                   print "Auth failed, couldn't create session" -- TEMP
                 Just session -> do
                   -- update the client in state to have the user ID
-                  modifyState (client { userId = Just (RUser.id user) }) state
+                  updateClientInState (client { userId = Just (RUser.id user) }) state
                   sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
     | Maybe.isJust reqSignIn -> do
       let email = T.toLower (Msg.reqSignInEmail (Maybe.fromJust reqSignIn))
@@ -211,7 +219,7 @@ handleWSClientMessage msg client state = do
               print "Auth failed, couldn't create session" -- TEMP
             Just session -> do
               -- update the client in state to have the user ID
-              modifyState (client { userId = Just (RUser.id user) }) state
+              updateClientInState (client { userId = Just (RUser.id user) }) state
               sendMessage (conn client) Msg.ResSignIn { type_ = Proxy.Proxy, resSignInSessionId = RSession.id session }
     | Maybe.isJust reqSignOut -> do
       let sessionId = Msg.reqSignOutSessionId (Maybe.fromJust reqSignOut)
@@ -233,7 +241,7 @@ handleWSClientMessage msg client state = do
               sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
             Just userId -> do
               let newWSClient = client { userId = Just userId }
-              modifyState newWSClient state
+              updateClientInState newWSClient state
               sendTodoList newWSClient state
     | Maybe.isJust reqCreateTodo -> do
       let name = (Msg.name :: Msg.ReqCreateTodo -> T.Text) (Maybe.fromJust reqCreateTodo)
