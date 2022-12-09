@@ -193,11 +193,12 @@ handleReqRegister reqRegister clientId state = do
   let email = T.toLower (Msg.reqRegisterEmail reqRegister)
   let password = Msg.reqRegisterPassword reqRegister
   -- validate that user does not exist
+  -- if we wanted to after this we would check for lenght of password, characters, validity of email, etc and then react with errors if necessary
   mUser <- Db.findUserByEmail email
   case mUser of 
     Just user -> do
+      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
       print "Error, user already registered" -- TEMP
-      -- sendMessage conn Msg.ResRegister { type_ = Proxy.Proxy, error = RegisterError.EmailExists }
     Nothing -> do
       mUser <- Db.createUser CUser.CUser
         { email = email
@@ -205,12 +206,14 @@ handleReqRegister reqRegister clientId state = do
         }
       case mUser of
         Nothing -> do
+          sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
           print "Auth failed, couldn't create user" -- TEMP
         Just user -> do
           -- (also create and send session, for convenience)
           mSession <- Db.createSession user
           case mSession of
             Nothing -> do
+              sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
               print "Auth failed, couldn't create session" -- TEMP
             Just session -> do
               -- update the client in state to have the user ID

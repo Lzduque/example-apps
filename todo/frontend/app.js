@@ -79,6 +79,14 @@ socket.onmessage = (event) => {
 				})
 			)
 			break
+		case 'ErrorRegisterEmail':
+			console.log(message.text)
+			emailError1.innerText = message.text
+			break
+		case 'ErrorRegisterPassword':
+			console.log(message.text)
+			passwordError1.innerText = message.text
+			break
 		default:
 			console.log('Message not recognized')
 			break
@@ -136,6 +144,8 @@ const showSignInView = () => {
 		['type', 'email'],
 	])
 
+	const emailError1 = addElement(registerContainer, 'p', 'emailError1', [])
+
 	const passwordDiv1 = addElement(registerContainer, 'div', 'passwordDiv1')
 
 	const passwordLabel1 = addElement(
@@ -149,6 +159,13 @@ const showSignInView = () => {
 	const passwordField1 = addElement(passwordDiv1, 'input', 'passwordField1', [
 		['type', 'password'],
 	])
+
+	const passwordError1 = addElement(
+		registerContainer,
+		'p',
+		'passwordError1',
+		[]
+	)
 
 	const submitButton1 = addElement(
 		registerContainer,

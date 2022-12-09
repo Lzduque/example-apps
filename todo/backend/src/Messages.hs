@@ -120,3 +120,21 @@ data ResSignOut = ResSignOut
   { type_ :: Proxy.Proxy "ResSignOut"
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ErrorRegisterPassword = ErrorRegisterPassword
+  { type_ :: Proxy.Proxy "ErrorRegisterPassword"
+  , text :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ErrorRegisterEmail = ErrorRegisterEmail
+  { type_ :: Proxy.Proxy "ErrorRegisterEmail"
+  , text :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+-- data ErrorRegisterEmail = ErrorRegisterEmail
+-- 	{ type_ :: Proxy.Proxy "ErrorRegisterEmail"
+-- 	, message :: T.text
+-- 	}
+--   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
