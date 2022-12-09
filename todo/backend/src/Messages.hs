@@ -133,8 +133,8 @@ data ErrorRegisterEmail = ErrorRegisterEmail
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 
--- data ErrorRegisterEmail = ErrorRegisterEmail
--- 	{ type_ :: Proxy.Proxy "ErrorRegisterEmail"
--- 	, message :: T.text
--- 	}
---   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+data ErrorSignIn = ErrorSignIn
+  { type_ :: Proxy.Proxy "ErrorSignIn"
+  , text :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

@@ -11,7 +11,7 @@ data RTodoListItem = RTodoListItem
   , checked :: Bool
   , createdAt :: Time.UTCTime
   , updatedAt :: Time.UTCTime
-	, userId :: Integer
+  , userId :: Integer
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
 

@@ -87,6 +87,10 @@ socket.onmessage = (event) => {
 			console.log(message.text)
 			passwordError1.innerText = message.text
 			break
+		case 'ErrorSignIn':
+			console.log(message.text)
+			signInError.innerText = message.text
+			break
 		default:
 			console.log('Message not recognized')
 			break
@@ -167,6 +171,24 @@ const showSignInView = () => {
 		[]
 	)
 
+	emailField1.addEventListener(
+		'input',
+		(event) => (emailError1.innerText = '')
+	)
+	passwordField1.addEventListener(
+		'input',
+		(event) => (emailError1.innerText = '')
+	)
+
+	emailField1.addEventListener(
+		'input',
+		(event) => (passwordError1.innerText = '')
+	)
+	passwordField1.addEventListener(
+		'input',
+		(event) => (passwordError1.innerText = '')
+	)
+
 	const submitButton1 = addElement(
 		registerContainer,
 		'button',
@@ -183,8 +205,6 @@ const showSignInView = () => {
 					reqRegisterPassword: passwordField1.value,
 				})
 			)
-			emailField1.value = ''
-			passwordField1.value = ''
 		} catch (e) {
 			console.log('ERROR ReqRegister: ', e)
 		}
@@ -243,6 +263,16 @@ const showSignInView = () => {
 		['type', 'password'],
 	])
 
+	const signInError = addElement(signInContainer, 'p', 'signInError')
+	emailField2.addEventListener(
+		'input',
+		(event) => (signInError.innerText = '')
+	)
+	passwordField2.addEventListener(
+		'input',
+		(event) => (signInError.innerText = '')
+	)
+
 	const submitButton2 = addElement(
 		signInContainer,
 		'button',
@@ -259,8 +289,6 @@ const showSignInView = () => {
 					reqSignInPassword: passwordField2.value,
 				})
 			)
-			emailField2.value = ''
-			passwordField2.value = ''
 		} catch (e) {
 			console.log('ERROR ReqSignIn: ', e)
 		}

@@ -239,15 +239,14 @@ handleReqSignIn reqSignIn clientId state = do
   case mUser of
     Nothing -> do
       print "Auth failed, no user found" -- TEMP
-      -- TODO: send error message
-      -- sendMessage conn Msg.ResSignIn { type_ = Proxy.Proxy, error = SignInError.Generic }
-      -- sendMessage conn Msg.ResError { type_ = Proxy.Proxy, error = SignInError.Generic }
+      sendMessage (conn client) Msg.ErrorSignIn { type_ = Proxy.Proxy, text = "Incorrect email or password"}
     Just user -> do -- auth succeeded
       -- generate session
       mSession <- Db.createSession user
       case mSession of
         Nothing -> do
           print "Auth failed, couldn't create session" -- TEMP
+          sendMessage (conn client) Msg.ErrorSignIn { type_ = Proxy.Proxy, text = "Something went wrong :("}
         Just session -> do
           -- update the client in state to have the user ID
           let newClient = client { userId = Just (RUser.id user) }

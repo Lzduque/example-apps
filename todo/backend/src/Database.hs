@@ -81,7 +81,7 @@ getTodoList userId = do
 createTodo :: CTodoListItem.CTodoListItem -> IO (Maybe RTodoListItem.RTodoListItem)
 createTodo todoItem = do
   conn <- connect
-  let name = CTodoListItem.name todoItem
+  let name = T.strip (CTodoListItem.name todoItem)
   let userId = CTodoListItem.userId todoItem
   rows :: [DbTodoListItem.TodoListItem] <- handleQuery 
     (SQL.query conn "INSERT INTO TodoListItem (name, userId) VALUES (?, ?) RETURNING *" (name :: T.Text, userId :: Integer))
@@ -140,7 +140,7 @@ findUserByEmail email = do
 createUser :: CUser.CUser -> IO (Maybe RUser.RUser)
 createUser user = do
   conn <- connect
-  let email = CUser.email user
+  let email = T.strip (CUser.email user)
   let password = CUser.password user
   hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
   rows :: [DbUser.User] <- handleQuery 
@@ -191,7 +191,7 @@ createSession user = do
   conn <- connect
   let userId :: Integer = RUser.id user
   sId <- UUID.nextRandom
-  let sessionId :: T.Text = UUID.toText sId :: T.Text
+  let sessionId :: T.Text = UUID.toText sId
   rows :: [DbSession.Session] <- handleQuery 
     (SQL.query conn "INSERT INTO Session (id, userId) VALUES (?, ?) RETURNING *"
       ( sessionId :: T.Text
