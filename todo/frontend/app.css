@@ -146,6 +146,7 @@ h2 {
 	gap: 1rem;
 	justify-content: center;
 	align-items: center;
+	width: 300px;
 }
 
 #signInContainer {
@@ -187,4 +188,13 @@ h2 {
 	align-self: start;
 	justify-content: space-between;
 	width: 100%;
+}
+#passwordError1 {
+	font-size: 0.8rem;
+	height: 1rem;
+	width: 100%;
+	overflow-wrap: break-word;
+	font-weight: bold;
+	color: darkred;
+	overflow: hidden;
 }
