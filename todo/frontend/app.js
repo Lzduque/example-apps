@@ -91,6 +91,9 @@ socket.onmessage = (event) => {
 			console.log(message.text)
 			signInError.innerText = message.text
 			break
+		case 'ErrorCreateTodo':
+			console.log(message.text)
+			todoError.innerText = message.text
 		default:
 			console.log('Message not recognized')
 			break
@@ -350,6 +353,9 @@ const showListView = () => {
 	const newItemBox = addElement(newItemContainer, 'input', 'newItemBox', [
 		['type', 'text'],
 	])
+
+	const todoError = addElement(main, 'p', 'todoError')
+	newItemBox.addEventListener('input', (event) => (todoError.innerText = ''))
 
 	const createTodo = () => {
 		try {

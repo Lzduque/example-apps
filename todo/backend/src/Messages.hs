@@ -138,3 +138,9 @@ data ErrorSignIn = ErrorSignIn
   , text :: T.Text
   }
   deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
+
+data ErrorCreateTodo = ErrorCreateTodo
+  { type_ :: Proxy.Proxy "ErrorCreateTodo"
+  , text :: T.Text
+  }
+  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)

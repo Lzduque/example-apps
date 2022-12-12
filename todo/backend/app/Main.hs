@@ -308,15 +308,19 @@ handleReqCreateTodo reqCreateTodo clientId state = do
   mSession <- Db.findSessionById sessionId
   case mSession of
     Nothing -> do
-      print "Auth failed, couldn't retrieve session" -- TEMP
-      -- TODO: send error message
+      print "Auth failed, couldn't retrieve session"
+      sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
     Just session -> do
       let userId = RSession.userId session
-      Db.createTodo CTodoListItem.CTodoListItem
+      mTodo <- Db.createTodo CTodoListItem.CTodoListItem
         { name = name
         , userId = userId
         }
-      sendMessage (conn client) Msg.ResCreateTodo { type_ = Proxy.Proxy }
+      case mTodo of
+        Nothing -> do
+          sendMessage (conn client) Msg.ErrorCreateTodo { type_ = Proxy.Proxy, text = "Something went wrong :("}
+        Just todo -> do
+          sendMessage (conn client) Msg.ResCreateTodo { type_ = Proxy.Proxy }
 
 handleReqDeleteTodo :: Msg.ReqDeleteTodo -> WSClientId -> Conc.MVar ServerState -> IO ()
 handleReqDeleteTodo reqDeleteTodo clientId state = do
