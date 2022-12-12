@@ -197,31 +197,39 @@ handleReqRegister reqRegister clientId state = do
   mUser <- Db.findUserByEmail email
   case mUser of 
     Just user -> do
-      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
       print "Error, user already registered" -- TEMP
+      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
     Nothing -> do
-      mUser <- Db.createUser CUser.CUser
-        { email = email
-        , password = password
-        }
-      case mUser of
-        Nothing -> do
-          sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
-          print "Auth failed, couldn't create user" -- TEMP
-        Just user -> do
-          -- (also create and send session, for convenience)
-          mSession <- Db.createSession user
-          case mSession of
+      case validatePassword password of
+        False -> do
+          print "Invalid password" -- TEMP
+          sendMessage (conn client) Msg.ErrorRegisterPassword { type_ = Proxy.Proxy, text = "Password must be at least 8 characters in length"}
+        True -> do
+          mUser <- Db.createUser CUser.CUser
+            { email = email
+            , password = password
+            }
+          case mUser of
             Nothing -> do
               sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
-              print "Auth failed, couldn't create session" -- TEMP
-            Just session -> do
-              -- update the client in state to have the user ID
-              let newClient = client { userId = Just (RUser.id user) }
-              Conc.modifyMVar_ state $ \s -> do
-                let s' = updateWSClient newClient s
-                return s'
-              sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
+              print "Auth failed, couldn't create user" -- TEMP
+            Just user -> do
+              -- (also create and send session, for convenience)
+              mSession <- Db.createSession user
+              case mSession of
+                Nothing -> do
+                  sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
+                  print "Auth failed, couldn't create session" -- TEMP
+                Just session -> do
+                  -- update the client in state to have the user ID
+                  let newClient = client { userId = Just (RUser.id user) }
+                  Conc.modifyMVar_ state $ \s -> do
+                    let s' = updateWSClient newClient s
+                    return s'
+                  sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
+
+validatePassword :: T.Text -> Bool
+validatePassword p = T.length p >= 8
 
 handleReqSignIn :: Msg.ReqSignIn -> WSClientId -> Conc.MVar ServerState -> IO ()
 handleReqSignIn reqSignIn clientId state = do
