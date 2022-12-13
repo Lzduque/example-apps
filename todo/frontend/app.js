@@ -218,10 +218,24 @@ const showSignInView = () => {
 		'horizontalLineContainer'
 	)
 
-	const horizontalLine = addElement(
+	const horizontalLine1 = addElement(
 		horizontalLineContainer,
 		'div',
-		'horizontalLine'
+		'horizontalLine1'
+	)
+
+	const horizontalLineText = addElement(
+		horizontalLineContainer,
+		'p',
+		'horizontalLineText',
+		[],
+		'Or'
+	)
+
+	const horizontalLine2 = addElement(
+		horizontalLineContainer,
+		'div',
+		'horizontalLine2'
 	)
 
 	// SIGN IN
