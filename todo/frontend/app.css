@@ -143,18 +143,25 @@ h2 {
 #registerContainer {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
 	justify-content: center;
 	align-items: center;
 	width: 300px;
 }
 
+#register {
+	padding-bottom: 1rem;
+}
+
+#signin {
+	padding-bottom: 1rem;
+}
+
 #signInContainer {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
 	justify-content: center;
 	align-items: center;
+	width: 300px;
 }
 
 #emailDiv1 {
@@ -164,6 +171,7 @@ h2 {
 	align-self: start;
 	justify-content: space-between;
 	width: 100%;
+	padding-bottom: 1rem;
 }
 #passwordDiv1 {
 	display: flex;
@@ -172,6 +180,7 @@ h2 {
 	align-self: start;
 	justify-content: space-between;
 	width: 100%;
+	padding-bottom: 0.5rem;
 }
 #emailDiv2 {
 	display: flex;
@@ -180,6 +189,7 @@ h2 {
 	align-self: start;
 	justify-content: space-between;
 	width: 100%;
+	padding-bottom: 1rem;
 }
 #passwordDiv2 {
 	display: flex;
@@ -188,6 +198,7 @@ h2 {
 	align-self: start;
 	justify-content: space-between;
 	width: 100%;
+	padding-bottom: 0.5rem;
 }
 #passwordError1 {
 	font-size: 0.8rem;
@@ -197,4 +208,15 @@ h2 {
 	font-weight: bold;
 	color: darkred;
 	overflow: hidden;
+	padding-bottom: 1rem;
+}
+#signInError {
+	font-size: 0.8rem;
+	height: 1rem;
+	width: 100%;
+	overflow-wrap: break-word;
+	font-weight: bold;
+	color: darkred;
+	overflow: hidden;
+	padding-bottom: 1rem;
 }

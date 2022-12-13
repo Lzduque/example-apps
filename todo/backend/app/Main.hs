@@ -211,7 +211,7 @@ handleReqRegister reqRegister clientId state = do
             }
           case mUser of
             Nothing -> do
-              sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
+              sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
               print "Auth failed, couldn't create user" -- TEMP
             Just user -> do
               -- (also create and send session, for convenience)

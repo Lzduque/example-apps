@@ -81,7 +81,7 @@ socket.onmessage = (event) => {
 			break
 		case 'ErrorRegisterEmail':
 			console.log(message.text)
-			emailError1.innerText = message.text
+			passwordError1.innerText = message.text
 			break
 		case 'ErrorRegisterPassword':
 			console.log(message.text)
@@ -151,8 +151,6 @@ const showSignInView = () => {
 		['type', 'email'],
 	])
 
-	const emailError1 = addElement(registerContainer, 'p', 'emailError1', [])
-
 	const passwordDiv1 = addElement(registerContainer, 'div', 'passwordDiv1')
 
 	const passwordLabel1 = addElement(
@@ -172,15 +170,6 @@ const showSignInView = () => {
 		'p',
 		'passwordError1',
 		[]
-	)
-
-	emailField1.addEventListener(
-		'input',
-		(event) => (emailError1.innerText = '')
-	)
-	passwordField1.addEventListener(
-		'input',
-		(event) => (emailError1.innerText = '')
 	)
 
 	emailField1.addEventListener(
