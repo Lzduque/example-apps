@@ -212,8 +212,14 @@ const showSignInView = () => {
 	)
 
 	// Horizontal line
-	const horizontalLine = addElement(
+	const horizontalLineContainer = addElement(
 		signInViewContainer,
+		'div',
+		'horizontalLineContainer'
+	)
+
+	const horizontalLine = addElement(
+		horizontalLineContainer,
 		'div',
 		'horizontalLine'
 	)

@@ -27,10 +27,23 @@ h2 {
 	height: 2rem;
 }
 
-#horizontalLine {
+#horizontalLineContainer {
 	width: 100%;
 	height: 1px;
+}
+
+#horizontalLine {
+	margin-left: 2rem;
+	margin-right: 2rem;
+	height: 1px;
 	background-color: black;
+}
+
+@media only screen and (min-width: 768px) {
+	#horizontalLine {
+		margin-left: 4rem;
+		margin-right: 4rem;
+	}
 }
 
 #main {
