@@ -159,11 +159,6 @@ createUser user = do
       , updatedAt = DbUser.updatedAt x
       })
 
--- readUsers :: IO [RUser.RUser]
--- readUsers = do
---   conn <- connect
---   users :: [DbUser.User] <- SQL.query_ conn "SELECT * FROM user"
-
 authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
 authenticateUser email password = do
   conn <- connect
