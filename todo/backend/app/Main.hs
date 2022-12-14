@@ -25,6 +25,7 @@ import Data.String.Conversions (cs)
 import qualified Data.UUID as UUID
 import qualified Data.UUID.V4 as UUID
 import qualified Data.List as L
+import qualified Text.Email.Validate as Email
 
 type WSClientId = UUID.UUID
 type UserId = Maybe Integer
@@ -191,42 +192,46 @@ handleReqRegister reqRegister clientId state = do
   let client = Maybe.fromJust mClient
 
   let email = T.toLower (Msg.reqRegisterEmail reqRegister)
-  let password = Msg.reqRegisterPassword reqRegister
-  -- validate that user does not exist
-  -- if we wanted to after this we would check for lenght of password, characters, validity of email, etc and then react with errors if necessary
-  mUser <- Db.findUserByEmail email
-  case mUser of 
-    Just user -> do
-      print "Error, user already registered" -- TEMP
-      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
-    Nothing -> do
-      case validatePassword password of
-        False -> do
-          print "Invalid password" -- TEMP
-          sendMessage (conn client) Msg.ErrorRegisterPassword { type_ = Proxy.Proxy, text = "Password must be at least 8 characters in length"}
-        True -> do
-          mUser <- Db.createUser CUser.CUser
-            { email = email
-            , password = password
-            }
-          case mUser of
-            Nothing -> do
-              sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
-              print "Auth failed, couldn't create user" -- TEMP
-            Just user -> do
-              -- (also create and send session, for convenience)
-              mSession <- Db.createSession user
-              case mSession of
+  case Email.isValid (cs email) of
+    False -> do
+      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
+    True -> do
+      let password = Msg.reqRegisterPassword reqRegister
+      -- validate that user does not exist
+      -- if we wanted to after this we would check for lenght of password, characters, validity of email, etc and then react with errors if necessary
+      mUser <- Db.findUserByEmail email
+      case mUser of 
+        Just user -> do
+          print "Error, user already registered" -- TEMP
+          sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
+        Nothing -> do
+          case validatePassword password of
+            False -> do
+              print "Invalid password" -- TEMP
+              sendMessage (conn client) Msg.ErrorRegisterPassword { type_ = Proxy.Proxy, text = "Password must be at least 8 characters in length"}
+            True -> do
+              mUser <- Db.createUser CUser.CUser
+                { email = email
+                , password = password
+                }
+              case mUser of
                 Nothing -> do
-                  sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
-                  print "Auth failed, couldn't create session" -- TEMP
-                Just session -> do
-                  -- update the client in state to have the user ID
-                  let newClient = client { userId = Just (RUser.id user) }
-                  Conc.modifyMVar_ state $ \s -> do
-                    let s' = updateWSClient newClient s
-                    return s'
-                  sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
+                  sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
+                  print "Auth failed, couldn't create user" -- TEMP
+                Just user -> do
+                  -- (also create and send session, for convenience)
+                  mSession <- Db.createSession user
+                  case mSession of
+                    Nothing -> do
+                      sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
+                      print "Auth failed, couldn't create session" -- TEMP
+                    Just session -> do
+                      -- update the client in state to have the user ID
+                      let newClient = client { userId = Just (RUser.id user) }
+                      Conc.modifyMVar_ state $ \s -> do
+                        let s' = updateWSClient newClient s
+                        return s'
+                      sendMessage (conn client) Msg.ResRegister { type_ = Proxy.Proxy, resRegisterSessionId = RSession.id session  }
 
 validatePassword :: T.Text -> Bool
 validatePassword p = T.length p >= 8

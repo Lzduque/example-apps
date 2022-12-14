@@ -113,7 +113,9 @@ h2 {
 	justify-content: start;
 	align-items: center;
 	padding: 1rem;
+	min-width: 10rem;
 	max-width: 30rem;
+	gap: 1rem;
 }
 
 #newItemBox {
@@ -256,4 +258,19 @@ h2 {
 	color: darkred;
 	overflow: hidden;
 	padding-bottom: 1rem;
+}
+
+.todoItem {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	overflow-wrap: break-word;
+	overflow: hidden;
+	gap: 1rem;
+}
+
+.checkbox {
+	padding-right: 1rem;
 }

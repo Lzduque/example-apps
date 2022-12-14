@@ -412,14 +412,20 @@ const updateTodoList = (items) => {
 	if (!listView) return
 	listView.innerHTML = ''
 	items.forEach(({id, name, checked}) => {
-		const itemContainer = addElement(listView, 'div', id)
+		const itemContainer = addElement(listView, 'div', id, [
+			['class', 'todoItem'],
+		])
 		const itemLeftContainer = addElement(
 			itemContainer,
 			'div',
 			`${id}LeftContainer`
 		)
 		const checkedAttr = checked ? ['checked', ''] : null
-		const itemCheckboxAttrs = [['type', 'checkbox'], checkedAttr]
+		const itemCheckboxAttrs = [
+			['type', 'checkbox'],
+			['class', 'checkbox'],
+			checkedAttr,
+		]
 		const itemCheckbox = addElement(
 			itemLeftContainer,
 			'input',
