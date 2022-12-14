@@ -1,6 +1,5 @@
 module Main where
 
--- import qualified MyLib as Lib
 import qualified Messages as Msg
 import qualified Database as Db
 import qualified Api.Types.RTodoListItem as RTodoListItem
@@ -74,7 +73,6 @@ application state pending = do
   WS.withPingThread conn 30 (return ()) $ do
     msg :: T.Text <- WS.receiveData conn
     T.putStrLn $ "Message received: " <> msg
-    -- clients <- Conc.readMVar state
     handleConnectionMessage msg conn state
     
 handleConnectionMessage
@@ -112,7 +110,6 @@ handleNewConnection client state = do
         T.putStrLn $ "[handleNewConnection] From client: " <> cs (show (userId client))
         Conc.modifyMVar_ state $ \s -> do
           let s' = addWSClient client s
-          -- broadcast (fst client <> " joined") s'
           return s'
         sendMessage (conn client) Msg.ResConnection { type_ = Proxy.Proxy }
         connect (wsClientId client) state
@@ -124,7 +121,6 @@ disconnect clientId state = do
     let s' = removeWSClient clientId s
     return (s', s')
   print "SOMEONE DISCONNECTED"
-  -- broadcast (UUID.toText clientId <> " disconnected") s
 
 -- This is to continuously listen for messages from a specific client
 connect :: WSClientId -> Conc.MVar ServerState -> IO ()
@@ -151,7 +147,7 @@ handleWSClientMessage msg clientId state = do
   M.guard (Maybe.isJust mClient)
   let client = Maybe.fromJust mClient
   
-  -- DEBUGGING
+  -- Useful for debugging
   T.putStrLn $ "[handleWSClientMessage] New msg: " <> msg
   T.putStrLn $ "[handleWSClientMessage] From client: " <> UUID.toText (wsClientId client)
   T.putStrLn $ "[handleWSClientMessage] From client: " <> cs (show (userId client))
@@ -194,20 +190,19 @@ handleReqRegister reqRegister clientId state = do
   let email = T.toLower (Msg.reqRegisterEmail reqRegister)
   case Email.isValid (cs email) of
     False -> do
+      print "[error] Invalid email"
       sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
     True -> do
       let password = Msg.reqRegisterPassword reqRegister
-      -- validate that user does not exist
-      -- if we wanted to after this we would check for lenght of password, characters, validity of email, etc and then react with errors if necessary
       mUser <- Db.findUserByEmail email
       case mUser of 
         Just user -> do
-          print "Error, user already registered" -- TEMP
+          print "[error] User already registered"
           sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "User already registered"}
         Nothing -> do
           case validatePassword password of
             False -> do
-              print "Invalid password" -- TEMP
+              print "[error] Invalid password"
               sendMessage (conn client) Msg.ErrorRegisterPassword { type_ = Proxy.Proxy, text = "Password must be at least 8 characters in length"}
             True -> do
               mUser <- Db.createUser CUser.CUser
@@ -217,14 +212,14 @@ handleReqRegister reqRegister clientId state = do
               case mUser of
                 Nothing -> do
                   sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Invalid email"}
-                  print "Auth failed, couldn't create user" -- TEMP
+                  print "[error] Couldn't create user"
                 Just user -> do
-                  -- (also create and send session, for convenience)
+                  -- (also create and send session, logging in the user)
                   mSession <- Db.createSession user
                   case mSession of
                     Nothing -> do
                       sendMessage (conn client) Msg.ErrorRegisterEmail { type_ = Proxy.Proxy, text = "Something went wrong :("}
-                      print "Auth failed, couldn't create session" -- TEMP
+                      print "[error] Auth failed, couldn't create session"
                     Just session -> do
                       -- update the client in state to have the user ID
                       let newClient = client { userId = Just (RUser.id user) }
@@ -246,19 +241,16 @@ handleReqSignIn reqSignIn clientId state = do
   let client = Maybe.fromJust mClient
   let email = T.toLower (Msg.reqSignInEmail reqSignIn)
   let password = Msg.reqSignInPassword reqSignIn
-  -- validate auth
-  -- should this be a new type? AuthUser { email, password }
   mUser <- Db.authenticateUser email password
   case mUser of
     Nothing -> do
-      print "Auth failed, no user found" -- TEMP
+      print "[error] Auth failed, no user found"
       sendMessage (conn client) Msg.ErrorSignIn { type_ = Proxy.Proxy, text = "Incorrect email or password"}
     Just user -> do -- auth succeeded
-      -- generate session
       mSession <- Db.createSession user
       case mSession of
         Nothing -> do
-          print "Auth failed, couldn't create session" -- TEMP
+          print "[error] Auth failed, couldn't create session"
           sendMessage (conn client) Msg.ErrorSignIn { type_ = Proxy.Proxy, text = "Something went wrong :("}
         Just session -> do
           -- update the client in state to have the user ID
@@ -292,13 +284,13 @@ handleReqTodoList reqTodoList clientId state = do
   let mSessionId = Msg.reqTodoListSessionId reqTodoList
   case mSessionId of
     Nothing -> do
-      print "Invalid session"
+      print "[error] Invalid session"
       sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
     Just sessionId -> do
       mUserId <- Db.findUserIdBySessionId sessionId
       case mUserId of
         Nothing -> do
-          print "Invalid session"
+          print "[error] Couldn't find user of session"
           Db.deleteSession sessionId
           sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
         Just userId -> do
@@ -321,7 +313,7 @@ handleReqCreateTodo reqCreateTodo clientId state = do
   mSession <- Db.findSessionById sessionId
   case mSession of
     Nothing -> do
-      print "Auth failed, couldn't retrieve session"
+      print "[error] Auth failed, couldn't retrieve session"
       sendMessage (conn client) Msg.ResSignOut { type_ = Proxy.Proxy }
     Just session -> do
       let userId = RSession.userId session
@@ -331,6 +323,7 @@ handleReqCreateTodo reqCreateTodo clientId state = do
         }
       case mTodo of
         Nothing -> do
+          print "[error] Couldn't create todo item"
           sendMessage (conn client) Msg.ErrorCreateTodo { type_ = Proxy.Proxy, text = "Something went wrong :("}
         Just todo -> do
           sendMessage (conn client) Msg.ResCreateTodo { type_ = Proxy.Proxy }
@@ -381,7 +374,6 @@ sendTodoList clientId state = do
   let updateMsg = Msg.UpdateTodoList { type_ = Proxy.Proxy, items = items }
   broadcastUserMessage state client updateMsg
 
--- Should "Show a" be something more like "Message a"? To say that 'a' has to be a message, not just any string
 sendMessage :: Aeson.ToJSON a => WS.Connection -> a -> IO ()
 sendMessage conn msg = do
   WS.sendTextData conn (cs . Aeson.encode $ msg :: T.Text)
@@ -401,6 +393,4 @@ main = do
   let port :: Int = 9160
   putStrLn $
     "Listening on " <> address <> ":" <> show port
-  -- let m = Msg.ReqConnection {userId = "1234"}
-  -- putStrLn $ cs $ Aeson.encode m
   WS.runServer address port $ application state
