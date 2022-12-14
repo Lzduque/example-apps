@@ -178,6 +178,7 @@ handleWSClientMessage msg clientId state = do
     | otherwise -> do
       T.putStrLn $ "Message not recognized (user): " <> msg
 
+-- TODO: fix the error handling structure. MTL library? Control.Monad.Except? Control.Monad.Cont? Control.Exception?
 handleReqRegister :: Msg.ReqRegister -> WSClientId -> Conc.MVar ServerState -> IO ()
 handleReqRegister reqRegister clientId state = do
   clients <- Conc.readMVar state
@@ -186,7 +187,6 @@ handleReqRegister reqRegister clientId state = do
     T.putStrLn $ "[handleWSClientMessage] Error: client not in state: " <> UUID.toText clientId
   M.guard (Maybe.isJust mClient)
   let client = Maybe.fromJust mClient
-
   let email = T.toLower (Msg.reqRegisterEmail reqRegister)
   case Email.isValid (cs email) of
     False -> do
