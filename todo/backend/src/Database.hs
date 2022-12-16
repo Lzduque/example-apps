@@ -21,48 +21,12 @@ import qualified Api.Types.RSession as RSession
 import qualified Database.Types.TodoListItem as DbTodoListItem
 import qualified Database.Types.User as DbUser
 import qualified Database.Types.Session as DbSession
-
-dbFile :: FilePath
-dbFile = "todo.db"
-
-schemaFile :: FilePath
-schemaFile = "src/Database/Schema.sql"
-
-seedsFile :: FilePath
-seedsFile = "src/Database/Seeds.sql"
-
-connect :: IO SQL.Connection
-connect = SQL.open dbFile
-
-build :: IO ()
-build = do
-  conn <- connect
-  let db = SQL.connectionHandle conn
-  schemaSQL <- T.readFile schemaFile
-  handleQuery (SQLite.exec db schemaSQL) ()
-  putStrLn $ "Schema assembled"
-  SQL.close conn
-
-populate :: IO ()
-populate = do
-  conn <- connect
-  let db = SQL.connectionHandle conn
-  seedsSQL <- T.readFile seedsFile
-  handleQuery (SQLite.exec db seedsSQL) ()
-  putStrLn $ "DB populated"
-  SQL.close conn
-
-handleQuery :: IO a -> a -> IO a
-handleQuery query baseValue = E.catch
-  query
-  (\e -> do
-    print $ "SQL Error: " ++ show (e :: E.SomeException)
-    return baseValue)
+import qualified Standard.Database as Db
 
 getTodoList :: Integer -> IO [RTodoListItem.RTodoListItem]
 getTodoList userId = do
-  conn <- connect
-  items :: [DbTodoListItem.TodoListItem] <- handleQuery 
+  conn <- Db.connect
+  items :: [DbTodoListItem.TodoListItem] <- Db.handleQuery 
     (SQL.query conn "SELECT * FROM TodoListItem WHERE userId = ?" [userId :: Integer]
     )
     []
@@ -80,10 +44,10 @@ getTodoList userId = do
 
 createTodo :: CTodoListItem.CTodoListItem -> IO (Maybe RTodoListItem.RTodoListItem)
 createTodo todoItem = do
-  conn <- connect
+  conn <- Db.connect
   let name = T.strip (CTodoListItem.name todoItem)
   let userId = CTodoListItem.userId todoItem
-  rows :: [DbTodoListItem.TodoListItem] <- handleQuery 
+  rows :: [DbTodoListItem.TodoListItem] <- Db.handleQuery 
     (SQL.query conn "INSERT INTO TodoListItem (name, userId) VALUES (?, ?) RETURNING *" (name :: T.Text, userId :: Integer))
     []
   SQL.close conn
@@ -102,9 +66,9 @@ createTodo todoItem = do
 
 updateTodo :: Integer -> UTodoListItem.UTodoListItem -> IO ()
 updateTodo itemId todoItem = do
-  conn <- connect
+  conn <- Db.connect
   let checked = UTodoListItem.checked todoItem
-  handleQuery 
+  Db.handleQuery 
     (SQL.execute conn "UPDATE TodoListItem SET (checked) = (?) WHERE id = ?"
       (checked :: Bool
       , itemId :: Integer
@@ -115,8 +79,8 @@ updateTodo itemId todoItem = do
 
 deleteTodo :: Integer -> IO ()
 deleteTodo itemId = do
-  conn <- connect
-  handleQuery 
+  conn <- Db.connect
+  Db.handleQuery 
     (SQL.execute conn "DELETE FROM TodoListItem WHERE id = ?" [itemId :: Integer])
     ()
   SQL.close conn
@@ -125,8 +89,8 @@ deleteTodo itemId = do
 
 findUserByEmail :: T.Text -> IO (Maybe RUser.RUser)
 findUserByEmail email = do
-  conn <- connect
-  rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
+  conn <- Db.connect
+  rows :: [DbUser.User] <- Db.handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
   SQL.close conn
   case rows of
     [] -> return Nothing
@@ -139,11 +103,11 @@ findUserByEmail email = do
 
 createUser :: CUser.CUser -> IO (Maybe RUser.RUser)
 createUser user = do
-  conn <- connect
+  conn <- Db.connect
   let email = T.strip (CUser.email user)
   let password = CUser.password user
   hashedPassword <- Crypto.hashPasswordUsingPolicy Crypto.fastBcryptHashingPolicy (cs password)
-  rows :: [DbUser.User] <- handleQuery 
+  rows :: [DbUser.User] <- Db.handleQuery 
     (SQL.query conn "INSERT INTO User (email, password) VALUES (?, ?) RETURNING *"
       ( email :: T.Text
       , cs (Maybe.fromJust hashedPassword) :: T.Text)
@@ -161,8 +125,8 @@ createUser user = do
 
 authenticateUser :: T.Text -> T.Text -> IO (Maybe RUser.RUser)
 authenticateUser email password = do
-  conn <- connect
-  rows :: [DbUser.User] <- handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
+  conn <- Db.connect
+  rows :: [DbUser.User] <- Db.handleQuery (SQL.query conn "SELECT * FROM User WHERE email = ?" [email :: T.Text]) []
   SQL.close conn
   case rows of
     [] -> do
@@ -183,11 +147,11 @@ authenticateUser email password = do
 
 createSession :: RUser.RUser -> IO (Maybe RSession.RSession)
 createSession user = do
-  conn <- connect
+  conn <- Db.connect
   let userId :: Integer = RUser.id user
   sId <- UUID.nextRandom
   let sessionId :: T.Text = UUID.toText sId
-  rows :: [DbSession.Session] <- handleQuery 
+  rows :: [DbSession.Session] <- Db.handleQuery 
     (SQL.query conn "INSERT INTO Session (id, userId) VALUES (?, ?) RETURNING *"
       ( sessionId :: T.Text
       , userId :: Integer
@@ -204,8 +168,8 @@ createSession user = do
 
 findSessionById :: T.Text -> IO (Maybe RSession.RSession)
 findSessionById sessionId = do
-  conn <- connect
-  rows :: [DbSession.Session] <- handleQuery (SQL.query conn "SELECT * FROM Session WHERE id = ?" [sessionId :: T.Text]) []
+  conn <- Db.connect
+  rows :: [DbSession.Session] <- Db.handleQuery (SQL.query conn "SELECT * FROM Session WHERE id = ?" [sessionId :: T.Text]) []
   SQL.close conn
   case rows of
     [] -> return Nothing
@@ -216,8 +180,8 @@ findSessionById sessionId = do
 
 findUserIdBySessionId :: T.Text -> IO (Maybe Integer)
 findUserIdBySessionId sessionId = do
-  conn <- connect
-  rows :: [SQL.Only Integer] <- handleQuery (SQL.query conn "SELECT DISTINCT userId FROM Session WHERE id = ?" [sessionId :: T.Text]) []
+  conn <- Db.connect
+  rows :: [SQL.Only Integer] <- Db.handleQuery (SQL.query conn "SELECT DISTINCT userId FROM Session WHERE id = ?" [sessionId :: T.Text]) []
   SQL.close conn
   case rows of
     [] -> return Nothing
@@ -225,8 +189,8 @@ findUserIdBySessionId sessionId = do
 
 deleteSession :: T.Text -> IO ()
 deleteSession sessionId = do
-  conn <- connect
-  handleQuery 
+  conn <- Db.connect
+  Db.handleQuery 
     (SQL.execute conn "DELETE FROM Session WHERE id = ?" [sessionId :: T.Text])
     ()
   SQL.close conn
