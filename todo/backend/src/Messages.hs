@@ -19,16 +19,6 @@ instance {-# OVERLAPPING #-} TypeLits.KnownSymbol s => Aeson.FromJSON (Proxy.Pro
       = return (Proxy.Proxy :: Proxy.Proxy s)
   parseJSON _ = M.mzero
 
-data ReqConnection = ReqConnection
-  { type_ :: Proxy.Proxy "ReqConnection"
-  }
-  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
-
-data ResConnection = ResConnection
-  { type_ :: Proxy.Proxy "ResConnection"
-  }
-  deriving (Generics.Generic, Show, Aeson.ToJSON, Aeson.FromJSON)
-
 data ReqTodoList = ReqTodoList
   { type_ :: Proxy.Proxy "ReqTodoList"
   , reqTodoListSessionId :: Maybe T.Text
